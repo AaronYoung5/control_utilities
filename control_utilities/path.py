@@ -189,7 +189,7 @@ class Path():
             plt.show()
 
     @staticmethod
-    def calcPose(self, p1, p2, reversed=False):
+    def calcPose(p1, p2, reversed=False):
         """Calculates pose (position and orientation) at a point along the path
 
         Parameters
@@ -213,6 +213,7 @@ class Path():
 
         vec = p2 - p1
         theta = math.atan2((vec%chrono.ChVectorD(1,0,0)).Length(),vec^chrono.ChVectorD(1,0,0))
+        # theta = math.acos((p2^p1)/(p2.Length() * p1.Length()))
         if reversed:
             theta *= -1
         rot = chrono.ChQuaternionD()

@@ -137,7 +137,7 @@ class RandomTrack(Track):
             used to reverse the direction the path is created
         """
         self.points = self.generator.generatePath(seed=seed,reversed=reversed)
-        Track.__init__(self, self.points)
+        Track.__init__(self, self.points, width=self.width)
         super(RandomTrack, self).generateTrack()
 
     def plot(self, seed=1.0, show=True):
