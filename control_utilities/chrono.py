@@ -29,11 +29,18 @@ from control_utilities.driver import Driver
 #           Ex. Variable value: C:\Users\user\chrono\data\
 # ----------------------------------------------------------------------------------------------------
 
-try:
-    chrono.SetChronoDataPath(os.environ['CHRONO_DATA_DIR'])
-    veh.SetDataPath(os.path.join(os.environ['CHRONO_DATA_DIR'], 'vehicle', ''))
-except:
-    raise Exception('Cannot find CHRONO_DATA_DIR environmental variable. Explanation located in chrono_sim.py file')
+CHRONO_DATA_DIR = ""
+
+CONDA_PREFIX = os.environ.get('CONDA_PREFIX')
+if CONDA_PREFIX:
+    CHRONO_DATA_DIR = os.path.join(CONDA_PREFIX, "share", "chrono", "data")
+else:
+    CHRONO_DATA_DIR = os.environ.get('CHRONO_DATA_DIR')
+    if not CHRONO_DATA_DIR:
+        raise Exception('Cannot find CHRONO_DATA_DIR environmental variable. Explanation located in chrono_sim.py file')
+
+chrono.SetChronoDataPath(CHRONO_DATA_DIR)
+veh.SetDataPath(os.path.join(CHRONO_DATA_DIR, 'vehicle', ''))
 
 def GetInitPose(p1, p2, z=0.5, reversed=0):
     p1 = chrono.ChVectorD(p1[0], p1[1], z)
