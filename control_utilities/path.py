@@ -128,7 +128,7 @@ class Path():
         Determines closest point on the path from a pos
         """
         i = self.calcIndex(pos)
-        return self.points[i]
+        return self.points[i] , self.points[i] - pos
 
     def getPoint(self, i):
         """
@@ -141,7 +141,7 @@ class Path():
         Determines the distance progressed along the path
         """
         i = self.calcIndex(pos)
-        return self.s[i]
+        return self.s[i] + self.track_length * self.times_looped
 
     def getDistance(self, i):
         """
