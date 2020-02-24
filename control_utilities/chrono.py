@@ -48,12 +48,13 @@ def GetInitPose(p1, p2, z=0.5, reversed=0):
 
     initLoc = p1
 
-    vec = p2 - p1
-    theta = math.atan2((vec%chrono.ChVectorD(1,0,0)).Length(),vec^chrono.ChVectorD(1,0,0))
-    if reversed:
-        theta *= -1
     initRot = chrono.ChQuaternionD()
-    initRot.Q_from_AngZ(theta)
+    v1 = p2 - p1
+    v2 = chrono.ChVectorD(1, 0, 0)
+    ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
+    if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
+        ang *= -1
+    initRot.Q_from_AngZ(ang)
 
     return initLoc, initRot
 
@@ -62,7 +63,7 @@ def checkFile(file):
         raise Exception('Cannot find {}. Explanation located in chrono_sim.py file'.format(file))
 
 class ChronoSim:
-    def __init__(self, step_size, track, irrlicht=False, initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0)):
+    def __init__(self, step_size, track, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100):
         # Vehicle parameters for matplotlib
         f = 2
         self.length = 4.5  * f# [m]
@@ -82,22 +83,6 @@ class ChronoSim:
         self.render_step_size = 1.0 / 60  # FPS = 60
         self.render_steps = int(math.ceil(self.render_step_size / self.step_size))
 
-        # JSON file for vehicle model
-        self.vehicle_file = veh.GetDataPath() + os.path.join('hmmwv', 'vehicle', 'HMMWV_Vehicle.json')
-        checkFile(self.vehicle_file)
-
-        # JSON files for terrain
-        self.rigidterrain_file = veh.GetDataPath() + os.path.join('terrain', 'RigidPlane.json')
-        checkFile(self.rigidterrain_file)
-
-        # JSON file for powertrain (simple)
-        self.simplepowertrain_file = veh.GetDataPath() + os.path.join('generic', 'powertrain', 'SimplePowertrain.json')
-        checkFile(self.simplepowertrain_file)
-
-        # JSON files tire models (rigid)
-        self.rigidtire_file = veh.GetDataPath() + os.path.join('hmmwv', 'tire', 'HMMWV_RigidTire.json')
-        checkFile(self.rigidtire_file)
-
         # Initial vehicle position
         self.initLoc = initLoc
 
@@ -105,46 +90,142 @@ class ChronoSim:
         self.initRot = initRot
 
         # Rigid terrain dimensions
-        self.terrainHeight = 0
-        self.terrainLength = 300.0  # size in X direction
-        self.terrainWidth = 300.0  # size in Y direction
+        self.terrainHeight = terrainHeight
+        self.terrainLength = terrainLength  # size in X direction
+        self.terrainWidth = terrainWidth  # size in Y direction
 
         # Point on chassis tracked by the camera (Irrlicht only)
         self.trackPoint = chrono.ChVectorD(0.0, 0.0, 1.75)
 
         self.track = track
 
-        # --------------------------
-        # Create the various modules
-        # --------------------------
+        if vehicle_type == 'json':
 
-        self.vehicle = veh.WheeledVehicle(
-            self.vehicle_file, chrono.ChMaterialSurface.NSC)
-        self.vehicle.Initialize(chrono.ChCoordsysD(self.initLoc, self.initRot))
-        self.vehicle.SetChassisVisualizationType(
-            veh.VisualizationType_PRIMITIVES)
-        self.vehicle.SetSuspensionVisualizationType(
-            veh.VisualizationType_PRIMITIVES)
-        self.vehicle.SetSteeringVisualizationType(
-            veh.VisualizationType_PRIMITIVES)
-        self.vehicle.SetWheelVisualizationType(veh.VisualizationType_NONE)
+            # JSON file for vehicle model
+            self.vehicle_file = veh.GetDataPath() + os.path.join('hmmwv', 'vehicle', 'HMMWV_Vehicle.json')
+            checkFile(self.vehicle_file)
 
-        # Create and initialize the powertrain system
-        self.powertrain = veh.SimplePowertrain(self.simplepowertrain_file)
-        self.vehicle.InitializePowertrain(self.powertrain)
+            # JSON files for terrain
+            self.rigidterrain_file = veh.GetDataPath() + os.path.join('terrain', 'RigidPlane.json')
+            checkFile(self.rigidterrain_file)
 
-        # Create and initialize the tires
-        for axle in self.vehicle.GetAxles():
-            tireL = veh.RigidTire(self.rigidtire_file)
-            self.vehicle.InitializeTire(
-                tireL, axle.m_wheels[0], veh.VisualizationType_MESH)
-            tireR = veh.RigidTire(self.rigidtire_file)
-            self.vehicle.InitializeTire(
-                tireR, axle.m_wheels[1], veh.VisualizationType_MESH)
+            # JSON file for powertrain (simple)
+            self.simplepowertrain_file = veh.GetDataPath() + os.path.join('generic', 'powertrain', 'SimplePowertrain.json')
+            checkFile(self.simplepowertrain_file)
 
-        # Create the ground
-        self.terrain = veh.RigidTerrain(
-            self.vehicle.GetSystem(), self.rigidterrain_file)
+            # JSON files tire models (rigid)
+            self.rigidtire_file = veh.GetDataPath() + os.path.join('hmmwv', 'tire', 'HMMWV_RigidTire.json')
+            checkFile(self.rigidtire_file)
+
+            # --------------------------
+            # Create the various modules
+            # --------------------------
+
+            self.wheeled_vehicle = veh.WheeledVehicle(
+                self.vehicle_file, chrono.ChMaterialSurface.NSC)
+            self.wheeled_vehicle.Initialize(chrono.ChCoordsysD(self.initLoc, self.initRot))
+            self.wheeled_vehicle.SetChassisVisualizationType(
+                veh.VisualizationType_PRIMITIVES)
+            self.wheeled_vehicle.SetSuspensionVisualizationType(
+                veh.VisualizationType_PRIMITIVES)
+            self.wheeled_vehicle.SetSteeringVisualizationType(
+                veh.VisualizationType_PRIMITIVES)
+            self.wheeled_vehicle.SetWheelVisualizationType(veh.VisualizationType_NONE)
+
+            # Create and initialize the powertrain system
+            self.powertrain = veh.SimplePowertrain(self.simplepowertrain_file)
+            self.wheeled_vehicle.InitializePowertrain(self.powertrain)
+
+            # Create and initialize the tires
+            for axle in self.wheeled_vehicle.GetAxles():
+                tireL = veh.RigidTire(self.rigidtire_file)
+                self.wheeled_vehicle.InitializeTire(
+                    tireL, axle.m_wheels[0], veh.VisualizationType_MESH)
+                tireR = veh.RigidTire(self.rigidtire_file)
+                self.wheeled_vehicle.InitializeTire(
+                    tireR, axle.m_wheels[1], veh.VisualizationType_MESH)
+
+            # Create the ground
+            self.terrain = veh.RigidTerrain(
+                self.wheeled_vehicle.GetSystem(), self.rigidterrain_file)
+
+            self.vehicle = self.wheeled_vehicle
+
+        elif vehicle_type == 'rccar':
+            self.rc_vehicle = veh.RCCar()
+            self.rc_vehicle.SetContactMethod(chrono.ChMaterialSurface.NSC)
+            self.rc_vehicle.SetChassisCollisionType(veh.ChassisCollisionType_NONE)
+            self.rc_vehicle.SetChassisFixed(False)
+            self.rc_vehicle.SetInitPosition(chrono.ChCoordsysD(initLoc, initRot))
+            self.rc_vehicle.SetTireType(veh.TireModelType_RIGID)
+            self.rc_vehicle.SetTireStepSize(step_size)
+            self.rc_vehicle.Initialize()
+
+            self.rc_vehicle.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.rc_vehicle.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.rc_vehicle.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.rc_vehicle.SetWheelVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.rc_vehicle.SetTireVisualizationType(veh.VisualizationType_PRIMITIVES)
+
+            # Create the terrain
+            self.terrain = veh.RigidTerrain(self.rc_vehicle.GetSystem())
+            patch = self.terrain.AddPatch(chrono.ChCoordsysD(chrono.ChVectorD(0, 0, self.terrainHeight - 5), chrono.QUNIT),
+                                     chrono.ChVectorD(self.terrainLength, self.terrainWidth, 10))
+
+            patch.SetContactFrictionCoefficient(0.9)
+            patch.SetContactRestitutionCoefficient(0.01)
+            patch.SetContactMaterialProperties(2e7, 0.3)
+            patch.SetTexture(chrono.GetChronoDataFile("concrete.jpg"), self.terrainLength, self.terrainWidth)
+            patch.SetColor(chrono.ChColor(0.8, 0.8, 0.5))
+            self.terrain.Initialize()
+
+            ground_body = patch.GetGroundBody()
+            ground_asset = ground_body.GetAssets()[0]
+            visual_asset = chrono.CastToChVisualization(ground_asset)
+            vis_mat = chrono.ChVisualMaterial()
+            vis_mat.SetKdTexture(chrono.GetChronoDataFile("concrete.jpg"))
+            visual_asset.material_list.append(vis_mat)
+
+            self.vehicle = self.rc_vehicle.GetVehicle()
+
+        elif vehicle_type == 'sedan':
+            self.sedan = veh.Sedan()
+            self.sedan.SetContactMethod(chrono.ChMaterialSurface.NSC)
+            self.sedan.SetChassisCollisionType(veh.ChassisCollisionType_NONE)
+            self.sedan.SetChassisFixed(False)
+            self.sedan.SetInitPosition(chrono.ChCoordsysD(initLoc, initRot))
+            self.sedan.SetTireType(veh.TireModelType_RIGID)
+            self.sedan.SetTireStepSize(step_size)
+            self.sedan.Initialize()
+
+            self.sedan.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.sedan.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.sedan.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.sedan.SetWheelVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.sedan.SetTireVisualizationType(veh.VisualizationType_PRIMITIVES)
+
+            # Create the terrain
+            self.terrain = veh.RigidTerrain(self.sedan.GetSystem())
+            patch = self.terrain.AddPatch(chrono.ChCoordsysD(chrono.ChVectorD(0, 0, self.terrainHeight - 5), chrono.QUNIT),
+                                     chrono.ChVectorD(self.terrainLength, self.terrainWidth, 10))
+
+            patch.SetContactFrictionCoefficient(0.9)
+            patch.SetContactRestitutionCoefficient(0.01)
+            patch.SetContactMaterialProperties(2e7, 0.3)
+            patch.SetTexture(chrono.GetChronoDataFile("concrete.jpg"), self.terrainLength, self.terrainWidth)
+            patch.SetColor(chrono.ChColor(0.8, 0.8, 0.5))
+            self.terrain.Initialize()
+
+            ground_body = patch.GetGroundBody()
+            ground_asset = ground_body.GetAssets()[0]
+            visual_asset = chrono.CastToChVisualization(ground_asset)
+            vis_mat = chrono.ChVisualMaterial()
+            vis_mat.SetKdTexture(chrono.GetChronoDataFile("concrete.jpg"))
+            vis_mat.SetFresnelMax(0);
+            visual_asset.material_list.append(vis_mat)
+
+            self.vehicle = self.sedan.GetVehicle()
+
         # -------------
         # Create driver
         # -------------
