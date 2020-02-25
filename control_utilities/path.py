@@ -78,6 +78,9 @@ class Path():
         self.ddx, self.ddy = splev(u_new, tck, der=2)
         self.k = self.curvature(self.dx, self.dy, self.ddx, self.ddy)
         self.s = self.distance(self.x, self.y)
+        self.yaw = self.yaw(self.dx, self.dy)
+        self.v = self.speed(self.x, self.y, self.k)
+        print(self.v)
 
         self.points = []
         for x,y in zip(self.x, self.y):
@@ -100,6 +103,28 @@ class Path():
         Compute distance from beginning given two points.
         """
         return np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+
+    def yaw(self, dx, dy):
+        """
+        Compute yaw along the given path
+        """
+        yaw = []
+        for i in range(len(dx)):
+            yaw.append(math.atan2(dy[i], dx[i]))
+        return yaw
+
+    def speed(self, x, y, k):
+        """
+        Compute speed profile for the given path
+        """
+        self.u_s = .5
+        self.g = 9.81
+        k = np.true_divide(1, k)
+        speed = []
+        for kk in k:
+            speed.append(math.sqrt(abs(kk * self.u_s * self.g)))
+        return speed
+
 
     def calcIndex(self, pos, n=10):
         """
@@ -183,7 +208,16 @@ class Path():
         """
         import matplotlib.pyplot as plt
 
-        plt.plot(self.x,self.y, color)
+        # v = np.true_divide(self.v, max(self.v))
+        # c = []
+        # for r in v:
+        #     c.append([0,0,0])
+        # t = np.linspace(0, 2 * np.pi, 20)
+        # x = np.sin(t)
+        # y = np.cos(t)
+        # print(y)
+        # test
+        plt.scatter(self.x,self.y, c=self.v)
 
         if show:
             plt.show()
