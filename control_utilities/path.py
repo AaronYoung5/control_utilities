@@ -70,6 +70,10 @@ class Path():
 
     """
     def __init__(self, points, num_points=1000):
+        self.u_s = .25
+        self.g = 9.81
+        self.speed_max = 10
+
         points = np.array(points)
         tck, u = splprep(points.T, s=0.0, per=True)
         u_new = np.linspace(u.min(), u.max(), num_points)
@@ -80,7 +84,6 @@ class Path():
         self.s = self.distance(self.x, self.y)
         self.yaw = self.yaw(self.dx, self.dy)
         self.v = self.speed(self.x, self.y, self.k)
-        print(self.v)
 
         self.points = []
         for x,y in zip(self.x, self.y):
@@ -117,12 +120,11 @@ class Path():
         """
         Compute speed profile for the given path
         """
-        self.u_s = .5
-        self.g = 9.81
         k = np.true_divide(1, k)
         speed = []
         for kk in k:
             speed.append(math.sqrt(abs(kk * self.u_s * self.g)))
+        speed = np.clip(speed, 0, self.speed_max)
         return speed
 
 
@@ -186,6 +188,19 @@ class Path():
         Gets curvature on the path given an index
         """
         return self.k[i]
+
+    def calcSpeed(self, pos):
+        """
+        Determines the speed at the closest point along the path
+        """
+        i = self.calcIndex(pos)
+        return self.v[i]
+
+    def getSpeed(self, i):
+        """
+        Gets speed on the path given an index
+        """
+        return self.v[i]
 
     def calcPosition(self, s):
         """
