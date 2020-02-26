@@ -15,10 +15,12 @@ class MatSim:
     def close(self):
         plt.close()
 
-    def plot(self, track, veh_model):
+    def plot(self, track, veh_model, obstacles=None):
         if self.step_number % self.render_steps == 0:
             if not self.track_plotted:
                 self.plot_track(track)
+                if not (obstacles == None):
+                    self.plot_obstacles(obstacles)
                 self.track_plotted = True
             self.plot_car(veh_model, veh_model.GetState())
             self.plot_text(veh_model)
@@ -108,3 +110,24 @@ class MatSim:
             self.rl.set_ydata(np.array(rl_wheel[1, :]).flatten())
             self.rl.set_xdata(np.array(rl_wheel[0, :]).flatten())
         # plt.plot(state.x, state.y, "*")
+
+    def plot_obstacles(self, obstacles, color='k'):
+        for _, o in obstacles.items():
+            outline = np.array([[-o.length, o.length, o.length, -o.length, -o.length],
+                                [o.width / 2, o.width / 2, - o.width / 2, -o.width / 2, o.width / 2]])
+            import pychrono as chrono
+            p1 = o.p1
+            p2 = o.p2
+            v1 = p2 - p1
+            v2 = chrono.ChVectorD(1, 0, 0)
+            ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
+            if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
+                ang *= -1
+            Rot1 = np.array([[math.cos(ang), math.sin(ang)],
+                             [-math.sin(ang), math.cos(ang)]])
+            outline = (outline.T.dot(Rot1)).T
+            outline[0, :] += p1.x
+            outline[1, :] += p1.y
+            outline, = plt.plot(np.array(outline[0, :]).flatten(),
+                     np.array(outline[1, :]).flatten(), color)
+            del chrono

@@ -223,16 +223,8 @@ class Path():
         """
         import matplotlib.pyplot as plt
 
-        # v = np.true_divide(self.v, max(self.v))
-        # c = []
-        # for r in v:
-        #     c.append([0,0,0])
-        # t = np.linspace(0, 2 * np.pi, 20)
-        # x = np.sin(t)
-        # y = np.cos(t)
-        # print(y)
-        # test
-        plt.scatter(self.x,self.y, c=self.v)
+        plt.plot(self.x, self.y, color)
+        # plt.scatter(self.x,self.y, c=self.v)
 
         if show:
             plt.show()
@@ -269,6 +261,9 @@ class Path():
         rot.Q_from_AngZ(theta)
 
         return pos, rot
+
+    def __len__(self):
+        return len(self.x)
 
 class RandomPathGenerator():
     """

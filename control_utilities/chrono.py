@@ -63,7 +63,7 @@ def checkFile(file):
         raise Exception('Cannot find {}. Explanation located in chrono_sim.py file'.format(file))
 
 class ChronoSim:
-    def __init__(self, step_size, track, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100):
+    def __init__(self, step_size, track, obstacles=None, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100):
         # Vehicle parameters for matplotlib
         f = 2
         self.length = 4.5  * f# [m]
@@ -98,6 +98,8 @@ class ChronoSim:
         self.trackPoint = chrono.ChVectorD(0.0, 0.0, 1.75)
 
         self.track = track
+
+
 
         if vehicle_type == 'json':
 
@@ -244,6 +246,9 @@ class ChronoSim:
 
         if self.irrlicht:
             self.DrawTrack(track)
+            if obstacles != None:
+                self.obstacles = obstacles
+                self.DrawObstacles(obstacles)
 
         if self.irrlicht:
             self.app = veh.ChVehicleIrrApp(self.vehicle)
@@ -294,6 +299,39 @@ class ChronoSim:
             path_asset.SetColor(chrono.ChColor(0.0, 0.8, 0.0))
             path_asset.SetNumRenderPoints(max(2 * num_points, 400))
             road.AddAsset(path_asset)
+
+    def DrawObstacles(self, obstacles, z=0.5):
+        for i, o in obstacles.items():
+            p1 = o.p1
+            p2 = o.p2
+            box = chrono.ChBodyEasyBox((p2 - p1).Length(), 2, 1, 1000, True, True)
+            box.SetPos(p1)
+
+            q = chrono.ChQuaternionD()
+            v1 = p2 - p1
+            v2 = chrono.ChVectorD(1, 0, 0)
+            ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
+            if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
+                ang *= -1
+            q.Q_from_AngZ(ang)
+            box.SetRot(q)
+            box.SetBodyFixed(True)
+            box_asset = box.GetAssets()[0]
+            visual_asset = chrono.CastToChVisualization(box_asset)
+
+            vis_mat = chrono.ChVisualMaterial()
+            vis_mat.SetAmbientColor(chrono.ChVectorF(0, 0, 0))
+
+            if i % 2 == 0:
+                vis_mat.SetDiffuseColor(chrono.ChVectorF(1.0, 0, 0))
+            else:
+                vis_mat.SetDiffuseColor(chrono.ChVectorF(1.0, 1.0, 1.0))
+            vis_mat.SetSpecularColor(chrono.ChVectorF(0.9, 0.9, 0.9))
+            vis_mat.SetFresnelMin(0)
+            vis_mat.SetFresnelMax(0.1)
+
+            visual_asset.material_list.append(vis_mat)
+            self.vehicle.GetSystem().Add(box)
 
     def Advance(self, step):
         if self.irrlicht:
