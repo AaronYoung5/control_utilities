@@ -63,7 +63,7 @@ def checkFile(file):
         raise Exception('Cannot find {}. Explanation located in chrono_sim.py file'.format(file))
 
 class ChronoSim:
-    def __init__(self, step_size, track, obstacles=None, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100):
+    def __init__(self, step_size, track, obstacles=None, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100, vis_balls=False):
         # Vehicle parameters for matplotlib
         f = 2
         self.length = 4.5  * f# [m]
@@ -250,6 +250,21 @@ class ChronoSim:
                 self.obstacles = obstacles
                 self.DrawObstacles(obstacles)
 
+            self.ballS = chrono.ChBodyEasySphere(.25, 1000, False, vis_balls)
+            self.ballS.SetPos(chrono.ChVectorD(initLoc))
+            self.ballS.SetBodyFixed(True)
+            mballcolor = chrono.ChColorAsset()
+            mballcolor.SetColor(chrono.ChColor(1, 0, 0))
+            self.ballS.AddAsset(mballcolor)
+            self.vehicle.GetSystem().Add(self.ballS)
+            self.ballT = chrono.ChBodyEasySphere(.25, 1000, False, vis_balls)
+            self.ballT.SetPos(chrono.ChVectorD(initLoc))
+            self.ballT.SetBodyFixed(True)
+            mballcolor = chrono.ChColorAsset();
+            mballcolor.SetColor(chrono.ChColor(0, 1, 0));
+            self.ballT.AddAsset(mballcolor);
+            self.vehicle.GetSystem().Add(self.ballT)
+
         if self.irrlicht:
             self.app = veh.ChVehicleIrrApp(self.vehicle)
             self.app.SetHUDLocation(500, 20)
@@ -319,18 +334,6 @@ class ChronoSim:
             box_asset = box.GetAssets()[0]
             visual_asset = chrono.CastToChVisualization(box_asset)
 
-            vis_mat = chrono.ChVisualMaterial()
-            vis_mat.SetAmbientColor(chrono.ChVectorF(0, 0, 0))
-
-            if i % 2 == 0:
-                vis_mat.SetDiffuseColor(chrono.ChVectorF(1.0, 0, 0))
-            else:
-                vis_mat.SetDiffuseColor(chrono.ChVectorF(1.0, 1.0, 1.0))
-            vis_mat.SetSpecularColor(chrono.ChVectorF(0.9, 0.9, 0.9))
-            vis_mat.SetFresnelMin(0)
-            vis_mat.SetFresnelMax(0.1)
-
-            visual_asset.material_list.append(vis_mat)
             self.vehicle.GetSystem().Add(box)
 
     def Advance(self, step):
