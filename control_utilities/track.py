@@ -65,8 +65,8 @@ class Track:
             left.append(left[0])
             right.append(right[0])
 
-        self.pleft = left#self.__turn_pair_into_xy(left)
-        self.pright = right#self.__turn_pair_into_xy(right)
+        self.left_waypoints = left
+        self.right_waypoints = right
 
         self.left = Path(left, self.num_points)
         self.right = Path(right, self.num_points)
