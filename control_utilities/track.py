@@ -65,10 +65,13 @@ class Track:
             left.append(left[0])
             right.append(right[0])
 
-        self.left = Path(left)
-        self.right = Path(right)
+        self.pleft = left#self.__turn_pair_into_xy(left)
+        self.pright = right#self.__turn_pair_into_xy(right)
 
-    def plot(self, show=True):
+        self.left = Path(left, self.num_points)
+        self.right = Path(right, self.num_points)
+
+    def plot(self, show=True, centerline=True):
         """Plots track using matplotlib
 
         Parameters
@@ -77,7 +80,8 @@ class Track:
             if plot.show() be called
         """
         import matplotlib.pyplot as plt
-        self.center.plot(color='-r', show=False)
+        if centerline:
+            self.center.plot(color='-r', show=False)
         self.right.plot(color='-k', show=False)
         self.left.plot(color='-k', show=False)
         if show:
