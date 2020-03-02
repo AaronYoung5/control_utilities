@@ -32,12 +32,11 @@ from control_utilities.driver import Driver
 CHRONO_DATA_DIR = ""
 
 CONDA_PREFIX = os.environ.get('CONDA_PREFIX')
-if CONDA_PREFIX:
+CHRONO_DATA_DIR = os.environ.get('CHRONO_DATA_DIR')
+if CONDA_PREFIX and not CHRONO_DATA_DIR:
     CHRONO_DATA_DIR = os.path.join(CONDA_PREFIX, "share", "chrono", "data")
-else:
-    CHRONO_DATA_DIR = os.environ.get('CHRONO_DATA_DIR')
-    if not CHRONO_DATA_DIR:
-        raise Exception('Cannot find CHRONO_DATA_DIR environmental variable. Explanation located in chrono_sim.py file')
+elif not CHRONO_DATA_DIR:
+    raise Exception('Cannot find CHRONO_DATA_DIR environmental variable. Explanation located in chrono_sim.py file')
 
 chrono.SetChronoDataPath(CHRONO_DATA_DIR)
 veh.SetDataPath(os.path.join(CHRONO_DATA_DIR, 'vehicle', ''))
