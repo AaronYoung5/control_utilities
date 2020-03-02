@@ -71,15 +71,6 @@ class Track:
         self.left = Path(left, self.num_points)
         self.right = Path(right, self.num_points)
 
-    def __turn_pair_into_xy(self, array_points):
-        points = []
-        for array_point in array_points:
-            point = chrono.ChVectorD(0, 0, 0)
-            point.x = array_point[0]
-            point.y = array_point[1]
-            points.append(point)
-        return points
-
     def plot(self, show=True, centerline=True):
         """Plots track using matplotlib
 
