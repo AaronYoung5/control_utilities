@@ -24,7 +24,8 @@ class MatSim:
                 self.track_plotted = True
             self.plot_car(veh_model, veh_model.GetState())
             self.plot_text(veh_model)
-            plt.pause(.0000001)
+            if True:
+                plt.pause(.0000001)
         if len(plt.get_fignums()) == 0:
             return -1
 

@@ -6,6 +6,7 @@ import os
 import math
 import sys
 from control_utilities.driver import Driver
+from control_utilities.obstacle import RandomObstacleGenerator
 
 # ----------------------------------------------------------------------------------------------------
 # Set data directory
@@ -243,10 +244,10 @@ class ChronoSim:
             self.render_step_size / self.throttle_time)
         self.driver.SetBrakingDelta(self.render_step_size / self.braking_time)
 
+        self.obstacles = obstacles
         if self.irrlicht:
             self.DrawTrack(track)
             if obstacles != None:
-                self.obstacles = obstacles
                 self.DrawObstacles(obstacles)
 
             self.ballS = chrono.ChBodyEasySphere(.25, 1000, False, vis_balls)
@@ -315,6 +316,7 @@ class ChronoSim:
             road.AddAsset(path_asset)
 
     def DrawObstacles(self, obstacles, z=0.5):
+        self.boxes = []
         for i, o in obstacles.items():
             p1 = o.p1
             p2 = o.p2
@@ -334,6 +336,7 @@ class ChronoSim:
             visual_asset = chrono.CastToChVisualization(box_asset)
 
             self.vehicle.GetSystem().Add(box)
+            self.boxes.append(box)
 
     def Advance(self, step):
         if self.irrlicht:
@@ -358,6 +361,23 @@ class ChronoSim:
         self.terrain.Synchronize(time)
         if self.irrlicht:
             self.app.Synchronize("", driver_inputs)
+
+        if self.obstacles != None:
+            for n in range(len(self.obstacles)):
+                i = list(self.obstacles)[n]
+                obstacle = self.obstacles[i]
+                if obstacle.Update(step):
+                    self.obstacles = RandomObstacleGenerator.moveObstacle(self.track.center, self.obstacles, obstacle, i)
+                    self.boxes[n].SetPos(obstacle.p1)
+                    q = chrono.ChQuaternionD()
+                    v1 = obstacle.p2 - obstacle.p1
+                    v2 = chrono.ChVectorD(1, 0, 0)
+                    ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
+                    if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
+                        ang *= -1
+                    q.Q_from_AngZ(ang)
+                    self.boxes[n].SetRot(q)
+
 
         # Advance simulation for one timestep for all modules
         self.driver.Advance(step)
