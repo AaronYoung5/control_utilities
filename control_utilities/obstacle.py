@@ -1,7 +1,7 @@
 from random import randint
 
 class Obstacle:
-    def __init__(self, p1, p2, i, dist, width=3, length=4, movement_rate=-1, movement_distance=0, ch_time=0.0, num_movements=0):
+    def __init__(self, p1, p2, i, dist, width=1, length=2, movement_rate=-1, movement_distance=0, ch_time=0.0, num_movements=0):
         self.p1 = p1
         self.p2 = p2
         self.i = i

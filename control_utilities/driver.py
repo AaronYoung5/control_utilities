@@ -8,6 +8,7 @@ class Driver(veh.ChDriver):
         self.throttle_target = 0
         self.braking_target = 0
 
+        # To be used for keyboard controlling
         self.steering_delta = 1.0 / 50
         self.throttle_delta = 1.0 / 50
         self.braking_delta = 1.0 / 50
@@ -16,16 +17,21 @@ class Driver(veh.ChDriver):
         self.throttle_gain = 4.0
         self.braking_gain = 4.0
 
+        self.step_size = 1e-3
+
     def SetGains(self, steering_gain, throttle_gain, braking_gain):
         self.steering_gain = steering_gain
         self.throttle_gain = throttle_gain
         self.braking_gain = braking_gain
 
+    def SetStepSize(self, step_size):
+        self.step_size = step_size
+
     def Advance(self, step):
         # Integrate dynamics, taking as many steps as required to reach the value 'step'
         t = 0.0
         while t < step:
-            h = step - t
+            h = min(self.step_size, step - t)
 
             throttle_deriv = self.throttle_gain * (self.throttle_target - self.GetThrottle())
             steering_deriv = self.steering_gain * (self.steering_target - self.GetSteering())
@@ -35,7 +41,7 @@ class Driver(veh.ChDriver):
             self.SetSteering(self.GetSteering() + h * steering_deriv)
             self.SetBraking(self.GetBraking() + h * braking_deriv)
 
-            t = t + h
+            t += h
 
     def GetTargetThrottle(self):
         return self.throttle_target

@@ -63,7 +63,7 @@ def checkFile(file):
         raise Exception('Cannot find {}. Explanation located in chrono_sim.py file'.format(file))
 
 class ChronoSim:
-    def __init__(self, step_size, track, obstacles=None, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100, vis_balls=False):
+    def __init__(self, step_size, track, obstacles=None, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100, draw_barriers=False, vis_balls=False):
         # Vehicle parameters for matplotlib
         f = 2
         self.length = 4.5  * f# [m]
@@ -232,6 +232,7 @@ class ChronoSim:
         # Create driver
         # -------------
         self.driver = Driver(self.vehicle)
+        self.driver.SetStepSize(step_size)
 
         # Set the time response for steering and throttle inputs.
         # NOTE: this is not exact, since we do not render quite at the specified FPS.
@@ -249,6 +250,9 @@ class ChronoSim:
             self.DrawTrack(track)
             if obstacles != None:
                 self.DrawObstacles(obstacles)
+            if draw_barriers:
+                self.DrawBarriers(self.track.left.points)
+                self.DrawBarriers(self.track.right.points)
 
             self.ballS = chrono.ChBodyEasySphere(.25, 1000, False, vis_balls)
             self.ballS.SetPos(chrono.ChVectorD(initLoc))
@@ -314,6 +318,34 @@ class ChronoSim:
             path_asset.SetColor(chrono.ChColor(0.0, 0.8, 0.0))
             path_asset.SetNumRenderPoints(max(2 * num_points, 400))
             road.AddAsset(path_asset)
+
+    def DrawBarriers(self, points, n=10, height=1, width=1):
+        points = points[::n]
+        if points[-1] != points[0]:
+            points.append(points[-1])
+        for i in range(len(points) - 1):
+            p1 = points[i]
+            p2 = points[i + 1]
+            box = chrono.ChBodyEasyBox((p2 - p1).Length(), height, width, 1000, True, True)
+            box.SetPos(p1)
+
+            q = chrono.ChQuaternionD()
+            v1 = p2 - p1
+            v2 = chrono.ChVectorD(1, 0, 0)
+            ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
+            if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
+                ang *= -1
+            q.Q_from_AngZ(ang)
+            box.SetRot(q)
+            box.SetBodyFixed(True)
+
+            color = chrono.ChColorAsset()
+            if i % 2 == 0:
+                color.SetColor(chrono.ChColor(1, 0, 0))
+            else:
+                color.SetColor(chrono.ChColor(1, 1, 1))
+            box.AddAsset(color)
+            self.vehicle.GetSystem().Add(box)
 
     def DrawObstacles(self, obstacles, z=0.5):
         self.boxes = []

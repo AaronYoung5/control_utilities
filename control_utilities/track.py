@@ -129,7 +129,7 @@ class RandomTrack(Track):
         self.width = width
         self.generator = RandomPathGenerator(x_max=self.x_max, y_max=self.y_max)
 
-    def generateTrack(self, seed=1.0, reversed=0):
+    def generateTrack(self, seed=1.0, reversed=0, num_points=1000):
         """Generates Track object from new random centerline path
 
         Parameters
@@ -141,7 +141,7 @@ class RandomTrack(Track):
             used to reverse the direction the path is created
         """
         self.points = self.generator.generatePath(seed=seed,reversed=reversed)
-        Track.__init__(self, self.points, width=self.width)
+        Track.__init__(self, self.points, width=self.width, num_points=num_points)
         super(RandomTrack, self).generateTrack()
 
     def plot(self, seed=1.0, show=True):
