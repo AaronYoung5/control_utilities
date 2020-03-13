@@ -128,7 +128,7 @@ class Path():
         return speed
 
 
-    def calcIndex(self, pos, n=10):
+    def calcIndex(self, pos, n=20):
         """
         Calculates the index of the closest point on the path
         """
@@ -140,7 +140,7 @@ class Path():
             else:
                 ii = i
             temp = self.distance([pos.x, self.x[ii]],[pos.y, self.y[ii]])
-            if temp < bestd:
+            if temp <= bestd:
                 bestd = temp
                 besti = ii
 
@@ -150,11 +150,11 @@ class Path():
         self.last_dist = self.s[besti]
         return besti
 
-    def calcClosestPoint(self, pos):
+    def calcClosestPoint(self, pos, n=20):
         """
         Determines closest point on the path from a pos
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.points[i]
 
     def getPoint(self, i):
@@ -163,11 +163,11 @@ class Path():
         """
         return self.points[i]
 
-    def calcDistance(self, pos):
+    def calcDistance(self, pos, n=20):
         """
         Determines the distance progressed along the path
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.s[i] + self.track_length * self.times_looped
 
     def getDistance(self, i):
@@ -176,11 +176,11 @@ class Path():
         """
         return self.s[i]
 
-    def calcCurvature(self, pos):
+    def calcCurvature(self, pos, n=20):
         """
         Determines the curvature at the closest point along the path
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.k[i]
 
     def getCurvature(self, i):
@@ -189,11 +189,11 @@ class Path():
         """
         return self.k[i]
 
-    def calcSpeed(self, pos):
+    def calcSpeed(self, pos, n=20):
         """
         Determines the speed at the closest point along the path
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.v[i]
 
     def getSpeed(self, i):
