@@ -73,6 +73,7 @@ class Path():
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 10
+        self.waypoints = points
 
         points = np.array(points)
         tck, u = splprep(points.T, s=0.0, per=per)
@@ -210,6 +211,14 @@ class Path():
         i = (np.abs(array-s)).argmin()
 
         return self.points[i], self.k[i]
+
+    def calcPositionFromPoint(self, pos, dist):
+        """
+        Determines the position based off a position and a distance from that position
+        """
+        i = self.calcIndex(pos)
+        s = self.s[i] + dist
+        return calcPosition(s)
 
     def plot(self, color, show=True):
         """Plots path using matplotlib
