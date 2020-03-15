@@ -4,6 +4,8 @@ import sys
 import numpy as np
 
 from scipy.interpolate import splprep, splev
+import scipy
+import warnings
 
 import pychrono as chrono
 
@@ -75,7 +77,10 @@ class Path():
         self.speed_max = 10
 
         points = np.array(points)
-        tck, u = splprep(points.T, s=0.0, per=per)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            tck, u = splprep(points.T, s=0.0, per=per)
+
         if raw_mode:
             u_new = u
         else:
@@ -98,6 +103,7 @@ class Path():
         self.track_length = self.s[-1]
         self.times_looped = 0
         self.length = len(self.x)
+
 
     def curvature(self, dx, dy, ddx, ddy):
         """
