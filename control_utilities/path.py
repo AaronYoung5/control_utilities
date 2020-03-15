@@ -69,7 +69,7 @@ class Path():
         calculates pose (position and orientation) at a point along the path
 
     """
-    def __init__(self, points, num_points=1000, per=True):
+    def __init__(self, points, num_points=1000, per=True, raw_mode=False):
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 10
@@ -77,7 +77,11 @@ class Path():
 
         points = np.array(points)
         tck, u = splprep(points.T, s=0.0, per=per)
-        u_new = np.linspace(u.min(), u.max(), num_points)
+        if raw_mode:
+            u_new = u
+        else:
+            u_new = np.linspace(u.min(), u.max(), num_points)
+
         self.x, self.y = splev(u_new, tck, der=0)
         self.dx, self.dy = splev(u_new, tck, der=1)
         self.ddx, self.ddy = splev(u_new, tck, der=2)
