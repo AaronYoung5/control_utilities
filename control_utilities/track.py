@@ -31,7 +31,7 @@ class Track:
         plots the track using matplotlib
 
     """
-    def __init__(self, center, width=10, num_points=1000):
+    def __init__(self, center, width=10, num_points=1000, raw_mode=False):
         """
         Parameters
         ----------
@@ -42,7 +42,8 @@ class Track:
         num_points : int, optional
             num points to interpolate along path
         """
-        self.center = Path(center, num_points)
+        self.raw_mode = raw_mode
+        self.center = Path(center, num_points, raw_mode=raw_mode)
         self.width = width
         self.num_points = num_points
 
@@ -65,11 +66,8 @@ class Track:
             left.append(left[0])
             right.append(right[0])
 
-        self.left_waypoints = left
-        self.right_waypoints = right
-
-        self.left = Path(left, self.num_points)
-        self.right = Path(right, self.num_points)
+        self.left = Path(left, self.num_points, raw_mode=self.raw_mode)
+        self.right = Path(right, self.num_points, raw_mode=self.raw_mode)
 
     def checkBoundary(self, pos, n=20):
         """Checks if current position is within boundaries or not"""
