@@ -1,66 +1,56 @@
 from random import randint
 from control_utilities.chrono_utilities import calcPose
-from control_utilities.driver import Driver
+from control_utilities.chrono_vehicle import ChronoVehicle
 
 import math
 import pychrono as chrono
 
 class Opponent:
-    def __init__(self, pos, rot, path, controller=None, lat_controller=None, long_controller=None):
-        self.pos = pos
-        self.rot = rot
-        self.pos_dt = None
-        self.path = path
-
-        if controller == None and (lat_controller == None or long_controller == None):
-            raise Exception("MovingObstacle Class :: Must pass in either a single controller or a steering and throttle controllers.")
-        elif controller != None and (lat_controller != None or long_controller != None):
-            print("You passed in a controller and a steering and/or throttle controllers. Setting controller. Please only choose one type.")
-
+    def __init__(self, vehicle, controller):
+        self.vehicle = vehicle
         self.controller = controller
-        self.lat_controller = lat_controller
-        self.long_controller = long_controller
-        self.single_controller = (controller != None)
 
-    def Update(self, step, vehicle, driver):
-        # Update controllers
-        if self.single_controller:
-            steering, throttle, braking = self.controller.Advance(step, vehicle, driver)
-        else:
-            steering = self.lat_controller.Advance(step, vehicle)
-            throttle, braking = self.long_controller.Advance(step, vehicle, driver)
+    def Update(self, time, step):
+        # Synchronize vehicle
+        self.vehicle.Synchronize(time)
 
-        driver.SetTargetSteering(steering)
-        driver.SetTargetThrottle(throttle)
-        driver.SetTargetBraking(braking)
+        # Update controller
+        self.controller.Advance(step, self.vehicle)
 
-        self.pos = vehicle.GetVehiclePos()
-        self.pos_dt = vehicle.GetChassisBody().GetFrame_REF_to_abs().GetPos_dt()
+        # Advance vehicle
+        self.vehicle.Advance(step)
 
+    class State:
+        """ Opponent state class """
 
-def generateRandomOpponent(path, s_min=None, s_max=None, controller=None, lat_controller=None, long_controller=None):
-    if s_min == None:
-        print("generateRandomOpponents :: Setting s_min")
-        s_min = path.s[0]
-    if s_max == None:
-        print("generateRandomOpponents :: Setting s_max")
-        s_max = path.s[-1]
+        def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0, pos_dt=chrono.ChVectorD(0,0,0)):
+            self.x = x
+            self.y = y
+            self.yaw = yaw
+            self.v = v
+            self.pos_dt = pos_dt
 
-    s_rand = randint(int(s_min), int(s_max))
-    pos, _ = path.calcPosition(s_rand)
-    print(s_rand, pos)
-    p, rot = calcPose(path.points[path.calcIndex(pos)+1], pos)
-    print(pos, path.points[path.calcIndex(pos)+1], p)
-    return Opponent(pos=pos, rot=rot, path=path, controller=controller, lat_controller=lat_controller, long_controller=long_controller)
+            self.pos = chrono.ChVectorD(self.x, self.y, 0)
 
-def opponentInSight(current_pos, opponent_pos, pos_dt, perception_distance):
-    if pos_dt == None:
-        return
-    v1 = opponent_pos - current_pos
-    v2 = pos_dt / pos_dt.Length()
+        def __str__(self):
+            return str('({}, {}, {}, {})'.format(self.x, self.y, self.yaw, self.v))
+
+    def GetState(self):
+        """ Returns State: [x position, y position, heading, speed, position derivative] """
+        return self.State(
+            x=self.vehicle.vehicle.GetVehiclePos().x,
+            y=self.vehicle.vehicle.GetVehiclePos().y,
+            yaw=self.vehicle.vehicle.GetVehicleRot().Q_to_Euler123().z,
+            v=self.vehicle.vehicle.GetVehicleSpeed(),
+            pos_dt=self.vehicle.vehicle.GetChassisBody().GetFrame_REF_to_abs().GetPos_dt()
+            )
+
+def opponentInSight(current_state, opponent_state, perception_distance=20, field_of_view=chrono.CH_C_PI/4):
+    v1 = opponent_state.pos - current_state.pos
+    v2 = opponent_state.pos_dt / opponent_state.pos_dt.Length()
     ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
     if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
         ang *= -1
 
     # Return true if within certain distance and infront of vehicle
-    return (current_pos - opponent_pos).Length() <= perception_distance and abs(ang) < chrono.CH_C_PI / 2
+    return (current_state.pos - opponent_state.pos).Length() <= perception_distance and abs(ang) < field_of_view

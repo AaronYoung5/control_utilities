@@ -69,7 +69,7 @@ class Path():
         calculates pose (position and orientation) at a point along the path
 
     """
-    def __init__(self, points, num_points=1000, per=True, raw_mode=False, closed=True):
+    def __init__(self, points, num_points=1000, per=True, raw_mode=False, z=0.0):
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 10
@@ -91,7 +91,7 @@ class Path():
 
         self.points = []
         for x,y in zip(self.x, self.y):
-            self.points.append(chrono.ChVectorD(x,y,.5))
+            self.points.append(chrono.ChVectorD(x,y,z))
 
         self.last_index = 0
         self.last_dist = 0
@@ -300,7 +300,7 @@ class RandomPathGenerator():
     -------
     generatePath(seed=1.0, reversed=0)
         generate a random track using a convex hull
-    generatePoints(z=0.5)
+    generatePoints(z=0.0)
         generates a set of random points
     calcConvexHull(points)
         calculates the convex hull that around the random points generated
@@ -353,7 +353,7 @@ class RandomPathGenerator():
             self.hull.reverse()
         return self.hull
 
-    def generatePoints(self, z=0.5):
+    def generatePoints(self, z=0.0):
         """Generates a set of random points
 
         Parameters
