@@ -59,8 +59,8 @@ class Track:
             len = np.linalg.norm(np.array([dx,dy]))
             dx, dy = dx / len, dy / len
             dx, dy = dx * self.width / 2, dy * self.width / 2
-            right.append([ix-dy, iy+dx])
-            left.append([ix+dy, iy-dx])
+            left.append([ix-dy, iy+dx])
+            right.append([ix+dy, iy-dx])
             i+=1
 
         if self.per:
