@@ -73,7 +73,6 @@ class Path():
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 10
-        self.waypoints = points
 
         points = np.array(points)
         tck, u = splprep(points.T, s=0.0, per=per)
