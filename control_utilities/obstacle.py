@@ -1,7 +1,7 @@
 from random import randint
 
 class Obstacle:
-    def __init__(self, p1, p2, i, dist, width=1, length=2, movement_rate=-1, movement_distance=0, ch_time=0.0, num_movements=0):
+    def __init__(self, p1, p2, i, dist, num, width=1, length=2, movement_rate=-1, movement_distance=0, ch_time=0.0, num_movements=0):
         self.p1 = p1
         self.p2 = p2
         self.i = i
@@ -16,6 +16,8 @@ class Obstacle:
         self.movement_distance = movement_distance
         self.num_movements = num_movements
 
+        self.num = num
+
     def Update(self, step):
         if self.movement_rate == -1:
             print('Please set the movement_rate')
@@ -29,7 +31,7 @@ class Obstacle:
             return False
 
     def copy(self, p1, p2, new_i):
-        return Obstacle(self.p1, self.p2, new_i, self.dist, self.width, self.length, self.movement_rate, self.ch_time)
+        return Obstacle(self.p1, self.p2, new_i, self.dist, self.num, self.width, self.length, self.movement_rate, self.ch_time)
 
 class RandomObstacleGenerator:
     @staticmethod
@@ -40,7 +42,7 @@ class RandomObstacleGenerator:
             print("i_max must be less than the length of the path\nsetting i_max to len(path)")
             i_max = len(path)-1
         obstacles = []
-        for _ in range(n):
+        for num in range(n):
             i = randint(i_min, i_max)
             if i+dist < len(path):
                 p1 = path.points[i]
@@ -48,7 +50,7 @@ class RandomObstacleGenerator:
             else:
                 p1 = path.points[i]
                 p2 = path.points[i+dist - len(path)]
-            obstacles.append((i, Obstacle(p1, p2, i=i, dist=dist, width=width, length=length, movement_rate=movement_rate, movement_distance=movement_distance)))
+            obstacles.append((i, Obstacle(p1, p2, i=i, dist=dist, num=num, width=width, length=length, movement_rate=movement_rate, movement_distance=movement_distance)))
         return dict(obstacles)
 
     @staticmethod
@@ -62,6 +64,6 @@ class RandomObstacleGenerator:
         else:
             p1 = path.points[i]
             p2 = path.points[i+obstacle.dist - len(path)]
-        obstacles[i] = Obstacle(p1, p2, i, obstacle.dist, width=obstacle.width, length=obstacle.length, movement_rate=obstacle.movement_rate,movement_distance=obstacle.movement_distance, ch_time=obstacle.ch_time, num_movements=obstacle.num_movements)
+        obstacles[i] = Obstacle(p1, p2, i, obstacle.dist, num=obstacle.num, width=obstacle.width, length=obstacle.length, movement_rate=obstacle.movement_rate,movement_distance=obstacle.movement_distance, ch_time=obstacle.ch_time, num_movements=obstacle.num_movements)
         del obstacles[i_old]
         return obstacles

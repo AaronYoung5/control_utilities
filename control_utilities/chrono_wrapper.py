@@ -126,7 +126,7 @@ class ChronoWrapper:
         for i, o in obstacles.items():
             p1 = o.p1
             p2 = o.p2
-            box = chrono.ChBodyEasyBox((p2 - p1).Length(), 2, 1, 1000, True, True)
+            box = chrono.ChBodyEasyBox(o.length, o.width, 1, 1000, True, True)
             box.SetPos(p1)
 
             q = chrono.ChQuaternionD()

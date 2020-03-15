@@ -136,14 +136,16 @@ class ChronoVehicle:
             self.sys.Add(self.sentinel_target)
 
         # Vehicle parameters for matplotlib
-        f = 2
-        self.length = 4.5  * f# [m]
-        self.width = 2.0  * f# [m]
-        self.backtowheel = 1.0  * f# [m]
-        self.wheel_len = 0.3  * f# [m]
-        self.wheel_width = 0.2  * f# [m]
-        self.tread = 0.7  * f# [m]
-        self.wb = 2.5  * f# [m]
+        self.length = self.vehicle.GetWheelbase() + 2.0 # [m]
+        self.width = self.vehicle.GetWheeltrack(0) # [m]
+        self.backtowheel = 1.0 # [m]
+        self.wheel_len = self.vehicle.GetWheel(0, 1).GetWidth() * 2 # [m]
+        self.wheel_width = self.vehicle.GetWheel(0, 1).GetWidth() # [m]
+        self.tread = self.vehicle.GetWheeltrack(0) / 2 # [m]
+        self.wb = self.vehicle.GetWheelbase() # [m]
+        self.offset = [-4.0,0] # [m]
+
+        print(self.length, self.width, self.backtowheel, self.wheel_len, self.wheel_width, self.tread, self.wb)
 
     def SetTerrain(self, terrain):
         """ Sets the terrain for this class """
