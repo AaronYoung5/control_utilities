@@ -47,7 +47,7 @@ class Track:
         self.width = width
         self.num_points = num_points
 
-    def generateTrack(self, z=0.5):
+    def generateTrack(self, z=0.0):
         """Generates the left and right boundaries from the centerline"""
         left, right = [], []
 
