@@ -17,7 +17,7 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-
+.DS_Store
 # Compiled Static libraries
 *.lai
 *.la

@@ -69,13 +69,14 @@ class Path():
         calculates pose (position and orientation) at a point along the path
 
     """
-    def __init__(self, points, num_points=1000):
+    def __init__(self, points, num_points=1000, per=True):
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 10
+        self.waypoints = points
 
         points = np.array(points)
-        tck, u = splprep(points.T, s=0.0, per=True)
+        tck, u = splprep(points.T, s=0.0, per=per)
         u_new = np.linspace(u.min(), u.max(), num_points)
         self.x, self.y = splev(u_new, tck, der=0)
         self.dx, self.dy = splev(u_new, tck, der=1)
@@ -128,7 +129,7 @@ class Path():
         return speed
 
 
-    def calcIndex(self, pos, n=10):
+    def calcIndex(self, pos, n=20):
         """
         Calculates the index of the closest point on the path
         """
@@ -140,7 +141,7 @@ class Path():
             else:
                 ii = i
             temp = self.distance([pos.x, self.x[ii]],[pos.y, self.y[ii]])
-            if temp < bestd:
+            if temp <= bestd:
                 bestd = temp
                 besti = ii
 
@@ -150,11 +151,11 @@ class Path():
         self.last_dist = self.s[besti]
         return besti
 
-    def calcClosestPoint(self, pos):
+    def calcClosestPoint(self, pos, n=20):
         """
         Determines closest point on the path from a pos
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.points[i]
 
     def getPoint(self, i):
@@ -163,11 +164,11 @@ class Path():
         """
         return self.points[i]
 
-    def calcDistance(self, pos):
+    def calcDistance(self, pos, n=20):
         """
         Determines the distance progressed along the path
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.s[i] + self.track_length * self.times_looped
 
     def getDistance(self, i):
@@ -176,11 +177,11 @@ class Path():
         """
         return self.s[i]
 
-    def calcCurvature(self, pos):
+    def calcCurvature(self, pos, n=20):
         """
         Determines the curvature at the closest point along the path
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.k[i]
 
     def getCurvature(self, i):
@@ -189,11 +190,11 @@ class Path():
         """
         return self.k[i]
 
-    def calcSpeed(self, pos):
+    def calcSpeed(self, pos, n=20):
         """
         Determines the speed at the closest point along the path
         """
-        i = self.calcIndex(pos)
+        i = self.calcIndex(pos, n=n)
         return self.v[i]
 
     def getSpeed(self, i):
@@ -210,6 +211,14 @@ class Path():
         i = (np.abs(array-s)).argmin()
 
         return self.points[i], self.k[i]
+
+    def calcPositionFromPoint(self, pos, dist):
+        """
+        Determines the position based off a position and a distance from that position
+        """
+        i = self.calcIndex(pos)
+        s = self.s[i] + dist
+        return calcPosition(s)
 
     def plot(self, color, show=True):
         """Plots path using matplotlib

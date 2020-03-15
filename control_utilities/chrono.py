@@ -42,28 +42,12 @@ elif not CHRONO_DATA_DIR:
 chrono.SetChronoDataPath(CHRONO_DATA_DIR)
 veh.SetDataPath(os.path.join(CHRONO_DATA_DIR, 'vehicle', ''))
 
-def GetInitPose(p1, p2, z=0.5, reversed=0):
-    p1 = chrono.ChVectorD(p1[0], p1[1], z)
-    p2 = chrono.ChVectorD(p2[0], p2[1], z)
-
-    initLoc = p1
-
-    initRot = chrono.ChQuaternionD()
-    v1 = p2 - p1
-    v2 = chrono.ChVectorD(1, 0, 0)
-    ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
-    if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
-        ang *= -1
-    initRot.Q_from_AngZ(ang)
-
-    return initLoc, initRot
-
 def checkFile(file):
     if not os.path.exists(file):
         raise Exception('Cannot find {}. Explanation located in chrono_sim.py file'.format(file))
 
 class ChronoSim:
-    def __init__(self, step_size, track, obstacles=None, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100, vis_balls=False):
+    def __init__(self, step_size, track, obstacles=None, opponents=None, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), terrainHeight=0, terrainWidth=100, terrainLength=100, draw_barriers=False, vis_balls=False):
         # Vehicle parameters for matplotlib
         f = 2
         self.length = 4.5  * f# [m]
@@ -99,7 +83,11 @@ class ChronoSim:
 
         self.track = track
 
-
+        self.sys = chrono.ChSystemNSC()
+        self.sys.Set_G_acc(chrono.ChVectorD(0, 0, -9.81))
+        self.sys.SetSolverType(chrono.ChSolver.Type_BARZILAIBORWEIN)
+        self.sys.SetSolverMaxIterations(150)
+        self.sys.SetMaxPenetrationRecoverySpeed(4.0)
 
         if vehicle_type == 'json':
 
@@ -123,15 +111,11 @@ class ChronoSim:
             # Create the various modules
             # --------------------------
 
-            self.wheeled_vehicle = veh.WheeledVehicle(
-                self.vehicle_file, chrono.ChMaterialSurface.NSC)
+            self.wheeled_vehicle = veh.WheeledVehicle(self.sys, self.vehicle_file)
             self.wheeled_vehicle.Initialize(chrono.ChCoordsysD(self.initLoc, self.initRot))
-            self.wheeled_vehicle.SetChassisVisualizationType(
-                veh.VisualizationType_PRIMITIVES)
-            self.wheeled_vehicle.SetSuspensionVisualizationType(
-                veh.VisualizationType_PRIMITIVES)
-            self.wheeled_vehicle.SetSteeringVisualizationType(
-                veh.VisualizationType_PRIMITIVES)
+            self.wheeled_vehicle.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.wheeled_vehicle.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.wheeled_vehicle.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
             self.wheeled_vehicle.SetWheelVisualizationType(veh.VisualizationType_NONE)
 
             # Create and initialize the powertrain system
@@ -141,20 +125,17 @@ class ChronoSim:
             # Create and initialize the tires
             for axle in self.wheeled_vehicle.GetAxles():
                 tireL = veh.RigidTire(self.rigidtire_file)
-                self.wheeled_vehicle.InitializeTire(
-                    tireL, axle.m_wheels[0], veh.VisualizationType_MESH)
+                self.wheeled_vehicle.InitializeTire(tireL, axle.m_wheels[0], veh.VisualizationType_MESH)
                 tireR = veh.RigidTire(self.rigidtire_file)
-                self.wheeled_vehicle.InitializeTire(
-                    tireR, axle.m_wheels[1], veh.VisualizationType_MESH)
+                self.wheeled_vehicle.InitializeTire(tireR, axle.m_wheels[1], veh.VisualizationType_MESH)
 
             # Create the ground
-            self.terrain = veh.RigidTerrain(
-                self.wheeled_vehicle.GetSystem(), self.rigidterrain_file)
+            self.terrain = veh.RigidTerrain(self.wheeled_vehicle.GetSystem(), self.rigidterrain_file)
 
             self.vehicle = self.wheeled_vehicle
 
         elif vehicle_type == 'rccar':
-            self.rc_vehicle = veh.RCCar()
+            self.rc_vehicle = veh.RCCar(self.sys)
             self.rc_vehicle.SetContactMethod(chrono.ChMaterialSurface.NSC)
             self.rc_vehicle.SetChassisCollisionType(veh.ChassisCollisionType_NONE)
             self.rc_vehicle.SetChassisFixed(False)
@@ -181,17 +162,21 @@ class ChronoSim:
             patch.SetColor(chrono.ChColor(0.8, 0.8, 0.5))
             self.terrain.Initialize()
 
-            ground_body = patch.GetGroundBody()
-            ground_asset = ground_body.GetAssets()[0]
-            visual_asset = chrono.CastToChVisualization(ground_asset)
-            vis_mat = chrono.ChVisualMaterial()
-            vis_mat.SetKdTexture(chrono.GetChronoDataFile("concrete.jpg"))
-            visual_asset.material_list.append(vis_mat)
+            try:
+                ground_body = patch.GetGroundBody()
+                ground_asset = ground_body.GetAssets()[0]
+                visual_asset = chrono.CastToChVisualization(ground_asset)
+                vis_mat = chrono.ChVisualMaterial()
+                vis_mat.SetKdTexture(chrono.GetChronoDataFile("concrete.jpg"))
+                vis_mat.SetFresnelMax(0);
+                visual_asset.material_list.append(vis_mat)
+            except:
+                print("Not Visual Material")
 
             self.vehicle = self.rc_vehicle.GetVehicle()
 
         elif vehicle_type == 'sedan':
-            self.sedan = veh.Sedan()
+            self.sedan = veh.Sedan(self.sys)
             self.sedan.SetContactMethod(chrono.ChMaterialSurface.NSC)
             self.sedan.SetChassisCollisionType(veh.ChassisCollisionType_NONE)
             self.sedan.SetChassisFixed(False)
@@ -218,13 +203,16 @@ class ChronoSim:
             patch.SetColor(chrono.ChColor(0.8, 0.8, 0.5))
             self.terrain.Initialize()
 
-            ground_body = patch.GetGroundBody()
-            ground_asset = ground_body.GetAssets()[0]
-            visual_asset = chrono.CastToChVisualization(ground_asset)
-            vis_mat = chrono.ChVisualMaterial()
-            vis_mat.SetKdTexture(chrono.GetChronoDataFile("concrete.jpg"))
-            vis_mat.SetFresnelMax(0);
-            visual_asset.material_list.append(vis_mat)
+            try:
+                ground_body = patch.GetGroundBody()
+                ground_asset = ground_body.GetAssets()[0]
+                visual_asset = chrono.CastToChVisualization(ground_asset)
+                vis_mat = chrono.ChVisualMaterial()
+                vis_mat.SetKdTexture(chrono.GetChronoDataFile("concrete.jpg"))
+                vis_mat.SetFresnelMax(0);
+                visual_asset.material_list.append(vis_mat)
+            except:
+                print("Not Visual Material")
 
             self.vehicle = self.sedan.GetVehicle()
 
@@ -232,6 +220,7 @@ class ChronoSim:
         # Create driver
         # -------------
         self.driver = Driver(self.vehicle)
+        self.driver.SetStepSize(step_size)
 
         # Set the time response for steering and throttle inputs.
         # NOTE: this is not exact, since we do not render quite at the specified FPS.
@@ -245,10 +234,20 @@ class ChronoSim:
         self.driver.SetBrakingDelta(self.render_step_size / self.braking_time)
 
         self.obstacles = obstacles
+        self.opponents = opponents
         if self.irrlicht:
             self.DrawTrack(track)
             if obstacles != None:
                 self.DrawObstacles(obstacles)
+            if opponents != None:
+                temp = dict()
+                for opponent in opponents:
+                    o = self.AddOpponent(opponent)
+                    temp[opponent] = (o, Driver(o))
+                self.opponents = temp
+            if draw_barriers:
+                self.DrawBarriers(self.track.left.points)
+                self.DrawBarriers(self.track.right.points)
 
             self.ballS = chrono.ChBodyEasySphere(.25, 1000, False, vis_balls)
             self.ballS.SetPos(chrono.ChVectorD(initLoc))
@@ -256,14 +255,14 @@ class ChronoSim:
             mballcolor = chrono.ChColorAsset()
             mballcolor.SetColor(chrono.ChColor(1, 0, 0))
             self.ballS.AddAsset(mballcolor)
-            self.vehicle.GetSystem().Add(self.ballS)
+            self.sys.Add(self.ballS)
             self.ballT = chrono.ChBodyEasySphere(.25, 1000, False, vis_balls)
             self.ballT.SetPos(chrono.ChVectorD(initLoc))
             self.ballT.SetBodyFixed(True)
             mballcolor = chrono.ChColorAsset();
             mballcolor.SetColor(chrono.ChColor(0, 1, 0));
             self.ballT.AddAsset(mballcolor);
-            self.vehicle.GetSystem().Add(self.ballT)
+            self.sys.Add(self.ballT)
 
         if self.irrlicht:
             self.app = veh.ChVehicleIrrApp(self.vehicle)
@@ -296,9 +295,9 @@ class ChronoSim:
 
     def DrawTrack(self, track, z=0.5):
         if self.irrlicht:
-            road = self.vehicle.GetSystem().NewBody()
+            road = self.sys.NewBody()
             road.SetBodyFixed(True)
-            self.vehicle.GetSystem().AddBody(road)
+            self.sys.AddBody(road)
 
             def toChPath(path):
                 ch_path = chrono.vector_ChVectorD()
@@ -314,6 +313,75 @@ class ChronoSim:
             path_asset.SetColor(chrono.ChColor(0.0, 0.8, 0.0))
             path_asset.SetNumRenderPoints(max(2 * num_points, 400))
             road.AddAsset(path_asset)
+
+    def AddOpponent(self, opponent):
+            # JSON file for vehicle model
+            opponent_vehicle_file = veh.GetDataPath() + os.path.join('hmmwv', 'vehicle', 'HMMWV_Vehicle.json')
+            checkFile(opponent_vehicle_file)
+
+            # JSON files for terrain
+            opponent_rigidterrain_file = veh.GetDataPath() + os.path.join('terrain', 'RigidPlane.json')
+            checkFile(opponent_rigidterrain_file)
+
+            # JSON file for powertrain (simple)
+            opponent_simplepowertrain_file = veh.GetDataPath() + os.path.join('generic', 'powertrain', 'SimplePowertrain.json')
+            checkFile(opponent_simplepowertrain_file)
+
+            # JSON files tire models (rigid)
+            opponent_rigidtire_file = veh.GetDataPath() + os.path.join('hmmwv', 'tire', 'HMMWV_RigidTire.json')
+            checkFile(opponent_rigidtire_file)
+
+            # --------------------------
+            # Create the various modules
+            # --------------------------
+
+            opponent_vehicle = veh.WheeledVehicle(self.sys, opponent_vehicle_file)
+            opponent_vehicle.Initialize(chrono.ChCoordsysD(opponent.pos, opponent.rot))
+            opponent_vehicle.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+            opponent_vehicle.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
+            opponent_vehicle.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
+            opponent_vehicle.SetWheelVisualizationType(veh.VisualizationType_NONE)
+
+            # Create and initialize the powertrain system
+            opponent_powertrain = veh.SimplePowertrain(opponent_simplepowertrain_file)
+            opponent_vehicle.InitializePowertrain(opponent_powertrain)
+
+            # Create and initialize the tires
+            for opponent_axle in opponent_vehicle.GetAxles():
+                opponent_tireL = veh.RigidTire(opponent_rigidtire_file)
+                opponent_vehicle.InitializeTire(opponent_tireL, opponent_axle.m_wheels[0], veh.VisualizationType_MESH)
+                opponent_tireR = veh.RigidTire(opponent_rigidtire_file)
+                opponent_vehicle.InitializeTire(opponent_tireR, opponent_axle.m_wheels[1], veh.VisualizationType_MESH)
+
+            return opponent_vehicle
+
+    def DrawBarriers(self, points, n=10, height=1, width=1):
+        points = points[::n]
+        if points[-1] != points[0]:
+            points.append(points[-1])
+        for i in range(len(points) - 1):
+            p1 = points[i]
+            p2 = points[i + 1]
+            box = chrono.ChBodyEasyBox((p2 - p1).Length(), height, width, 1000, True, True)
+            box.SetPos(p1)
+
+            q = chrono.ChQuaternionD()
+            v1 = p2 - p1
+            v2 = chrono.ChVectorD(1, 0, 0)
+            ang = math.atan2((v1 % v2).Length(), v1 ^ v2)
+            if chrono.ChVectorD(0, 0, 1) ^ (v1 % v2) > 0.0:
+                ang *= -1
+            q.Q_from_AngZ(ang)
+            box.SetRot(q)
+            box.SetBodyFixed(True)
+
+            color = chrono.ChColorAsset()
+            if i % 2 == 0:
+                color.SetColor(chrono.ChColor(1, 0, 0))
+            else:
+                color.SetColor(chrono.ChColor(1, 1, 1))
+            box.AddAsset(color)
+            self.sys.Add(box)
 
     def DrawObstacles(self, obstacles, z=0.5):
         self.boxes = []
@@ -335,7 +403,7 @@ class ChronoSim:
             box_asset = box.GetAssets()[0]
             visual_asset = chrono.CastToChVisualization(box_asset)
 
-            self.vehicle.GetSystem().Add(box)
+            self.sys.Add(box)
             self.boxes.append(box)
 
     def Advance(self, step):
@@ -347,16 +415,15 @@ class ChronoSim:
                     True, True, chronoirr.SColor(255, 140, 161, 192))
                 self.app.DrawAll()
                 self.app.EndScene()
-        else:
-            self.vehicle.GetSystem().DoStepDynamics(step)
+        # else:
 
         # Collect output data from modules (for inter-module communication)
         driver_inputs = self.driver.GetInputs()
 
         # Update modules (process inputs from other modules)
-        time = self.vehicle.GetSystem().GetChTime()
-
+        time = self.sys.GetChTime()
         self.driver.Synchronize(time)
+
         self.vehicle.Synchronize(time, driver_inputs, self.terrain)
         self.terrain.Synchronize(time)
         if self.irrlicht:
@@ -377,6 +444,16 @@ class ChronoSim:
                         ang *= -1
                     q.Q_from_AngZ(ang)
                     self.boxes[n].SetRot(q)
+        if self.opponents != None:
+            for opponent in self.opponents:
+                opponent_vehicle = self.opponents[opponent][0]
+                driver = self.opponents[opponent][1]
+                driver_inputs = driver.GetInputs()
+                driver.Synchronize(time)
+                opponent.Update(step, opponent_vehicle, driver)
+                opponent_vehicle.Synchronize(time, driver_inputs, self.terrain)
+                driver.Advance(step)
+                opponent_vehicle.Advance(step)
 
 
         # Advance simulation for one timestep for all modules
@@ -386,6 +463,8 @@ class ChronoSim:
         if self.irrlicht:
             self.app.Advance(step)
             self.step_number += 1
+
+        self.sys.DoStepDynamics(step)
 
     def Close(self):
         if self.app.GetDevice().run():

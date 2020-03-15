@@ -31,7 +31,7 @@ class Track:
         plots the track using matplotlib
 
     """
-    def __init__(self, center, width=5, num_points=1000):
+    def __init__(self, center, width=10, num_points=1000):
         """
         Parameters
         ----------
@@ -56,9 +56,9 @@ class Track:
             dx, dy = self.center.dx[i], self.center.dy[i]
             len = np.linalg.norm(np.array([dx,dy]))
             dx, dy = dx / len, dy / len
-            dx, dy = dx * self.width, dy * self.width
-            left.append([ix-dy, iy+dx])
-            right.append([ix+dy, iy-dx])
+            dx, dy = dx * self.width / 2, dy * self.width / 2
+            right.append([ix-dy, iy+dx])
+            left.append([ix+dy, iy-dx])
             i+=1
 
         if left[0] != left[-1] and right[0] != right[-1]:
@@ -70,6 +70,12 @@ class Track:
 
         self.left = Path(left, self.num_points)
         self.right = Path(right, self.num_points)
+
+    def checkBoundary(self, pos, n=20):
+        """Checks if current position is within boundaries or not"""
+        track_pos = self.center.calcClosestPoint(pos, n=n)
+        dist = (track_pos - pos).Length()
+        return dist < (width / 2)
 
     def plot(self, show=True, centerline=True):
         """Plots track using matplotlib
@@ -113,7 +119,7 @@ class RandomTrack(Track):
         plots the track using matplotlib and adds sliders to interact with seed of random
 
     """
-    def __init__(self, x_max=100, y_max=100, width=5):
+    def __init__(self, x_max=100, y_max=100, width=10):
         """
         Parameters
         ----------
@@ -129,7 +135,7 @@ class RandomTrack(Track):
         self.width = width
         self.generator = RandomPathGenerator(x_max=self.x_max, y_max=self.y_max)
 
-    def generateTrack(self, seed=1.0, reversed=0):
+    def generateTrack(self, seed=1.0, reversed=0, num_points=1000):
         """Generates Track object from new random centerline path
 
         Parameters
@@ -141,7 +147,7 @@ class RandomTrack(Track):
             used to reverse the direction the path is created
         """
         self.points = self.generator.generatePath(seed=seed,reversed=reversed)
-        Track.__init__(self, self.points, width=self.width)
+        Track.__init__(self, self.points, width=self.width, num_points=num_points)
         super(RandomTrack, self).generateTrack()
 
     def plot(self, seed=1.0, show=True):
