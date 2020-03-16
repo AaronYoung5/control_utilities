@@ -4,10 +4,14 @@ import sys
 import numpy as np
 
 from scipy.interpolate import splprep, splev
+from matplotlib import pyplot as plt
 import scipy
 import warnings
 
 import pychrono as chrono
+
+BRK = 10
+ACC = 5
 
 class Path():
     """
@@ -91,8 +95,8 @@ class Path():
         self.ddx, self.ddy = splev(u_new, tck, der=2)
         self.length = len(self.x)
         self.k = self.curvature(self.dx, self.dy, self.ddx, self.ddy)
-        self.s = self.distance(self.x, self.y)
-        self.pd = self.point_distance()
+        self.ps = self.point_distance(self.x, self.y)
+        self.s = self.distance(self.ps)
         self.yaw = self.yaw(self.dx, self.dy)
         self.v_max = self.speed(self.x, self.y, self.k)
 
@@ -105,6 +109,80 @@ class Path():
         self.track_length = self.s[-1]
         self.times_looped = 0
 
+        self.update_vmax()
+        self.update_profile()
+
+    def update_vmax(self):
+        for i in range(self.length):
+            v_max = self.v_max[i]
+
+            s = 0
+            for j in range(1, i+1):
+                # Check v_max of all points before it
+                index = i-j
+                s += self.ps[index]
+                local_v_max = np.sqrt(2*BRK*s + np.square(v_max))
+                if local_v_max < self.v_max[index]:
+                    self.v_max[index] = local_v_max
+
+    def update_profile(self):
+        v = []
+        t = []
+
+        current_speed = 0
+        for i in range(len(self.ps)):
+            v.append(current_speed)
+
+            ps = self.ps[i]
+            v_max = self.v_max[i+1]
+
+            if current_speed <= v_max:
+                top_speed = np.sqrt(2*ACC*ps + current_speed**2)
+                v_end = v_max if top_speed > v_max else top_speed
+                acc_distance = (v_end**2 - current_speed**2) / (2 * ACC)
+                time = (top_speed-current_speed)/ACC + (ps-acc_distance)/v_end
+
+                t.append(time)
+                current_speed = v_end
+            else:
+                v_end = v_max
+                brk_distance = (current_speed**2 - v_end**2) / (2 * BRK)
+                time = (ps-brk_distance)/current_speed + (current_speed-v_end)/BRK
+                t.append(time)
+
+                current_speed = v_end
+
+        self.v = np.array(v)
+        self.t = np.array(t)
+
+    def plot_speed_profile(self):
+        # Speed
+        plt.plot(self.s, self.v, "g-")
+
+        # Time
+        plt.plot(self.s, self.t, "y-")
+
+        # Curvature
+        # plt.plot(np.abs(self.k*100), "b-")
+
+        # Max Speed based on global curvature
+        # plt.plot(np.abs(self.v_max), "k-")
+
+        # Throttle
+        # plt.plot(np.array(self.adjust_a)*10+5, "c+")
+
+        plt.show()
+
+    def plot_path_speed(self):
+        # last_v = 0
+
+        for i in range(self.length-1):
+            plt.plot(self.x[i], self.y[i], c=str(self.v[i]/10/1.3), marker="o")
+            # if self.v[i] >= last_v:
+            #     plt.plot(self.x[i], self.y[i], "g+")
+            # else:
+            #     plt.plot(self.x[i], self.y[i], "r+")
+            # last_v = self.v[i]
 
     def curvature(self, dx, dy, ddx, ddy):
         """
@@ -112,11 +190,17 @@ class Path():
         """
         return (dx * ddy - dy * ddx) / (dx ** 2 + dy ** 2) ** (3 / 2)
 
-    def distance(self, x, y):
+    def point_distance(self, x, y):
+        """
+        Computer distance between points
+        """
+        return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2)
+
+    def distance(self, pd):
         """
         Compute distance from beginning given two points.
         """
-        return np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+        return np.cumsum(pd)
 
     def yaw(self, dx, dy):
         """
@@ -138,17 +222,6 @@ class Path():
         speed = np.clip(speed, 0, self.speed_max)
         return speed
 
-    def point_distance(self):
-        pd = []
-        for i in range(self.length-1):
-            pd.append(self.calc_point_distance(i))
-        pd.append(pd[0])
-        return np.array(pd)
-
-    def calc_point_distance(self, index):
-        if index == 0:
-            return self.s[0]
-        return self.s[index]-self.s[index-1]
 
     def calcIndex(self, pos, n=20):
         """
