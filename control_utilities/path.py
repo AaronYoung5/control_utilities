@@ -89,10 +89,12 @@ class Path():
         self.x, self.y = splev(u_new, tck, der=0)
         self.dx, self.dy = splev(u_new, tck, der=1)
         self.ddx, self.ddy = splev(u_new, tck, der=2)
+        self.length = len(self.x)
         self.k = self.curvature(self.dx, self.dy, self.ddx, self.ddy)
         self.s = self.distance(self.x, self.y)
+        self.pd = self.point_distance()
         self.yaw = self.yaw(self.dx, self.dy)
-        self.v = self.speed(self.x, self.y, self.k)
+        self.v_max = self.speed(self.x, self.y, self.k)
 
         self.points = []
         for x,y in zip(self.x, self.y):
@@ -102,7 +104,6 @@ class Path():
         self.last_dist = 0
         self.track_length = self.s[-1]
         self.times_looped = 0
-        self.length = len(self.x)
 
 
     def curvature(self, dx, dy, ddx, ddy):
@@ -137,6 +138,17 @@ class Path():
         speed = np.clip(speed, 0, self.speed_max)
         return speed
 
+    def point_distance(self):
+        pd = []
+        for i in range(self.length-1):
+            pd.append(self.calc_point_distance(i))
+        pd.append(pd[0])
+        return np.array(pd)
+
+    def calc_point_distance(self, index):
+        if index == 0:
+            return self.s[0]
+        return self.s[index]-self.s[index-1]
 
     def calcIndex(self, pos, n=20):
         """
@@ -204,13 +216,13 @@ class Path():
         Determines the speed at the closest point along the path
         """
         i = self.calcIndex(pos, n=n)
-        return self.v[i]
+        return self.v_max[i]
 
     def getSpeed(self, i):
         """
         Gets speed on the path given an index
         """
-        return self.v[i]
+        return self.v_max[i]
 
     def calcPosition(self, s):
         """
