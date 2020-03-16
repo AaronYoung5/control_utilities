@@ -31,7 +31,7 @@ class Track:
         plots the track using matplotlib
 
     """
-    def __init__(self, center, width=10, num_points=1000, per=True, raw_mode=False):
+    def __init__(self, center, width=10, num_points=1000, closed=True, raw_mode=False):
         """
         Parameters
         ----------
@@ -43,8 +43,8 @@ class Track:
             num points to interpolate along path
         """
         self.raw_mode = raw_mode
-        self.per = per
-        self.center = Path(center, num_points, per=per, raw_mode=raw_mode)
+        self.closed = closed
+        self.center = Path(center, num_points, closed=closed, raw_mode=raw_mode)
         self.width = width
         self.num_points = num_points
 
@@ -63,13 +63,13 @@ class Track:
             right.append([ix+dy, iy-dx])
             i+=1
 
-        if self.per:
+        if self.closed:
             if left[0] != left[-1] and right[0] != right[-1]:
                 left.append(left[0])
                 right.append(right[0])
 
-        self.left = Path(left, self.num_points, per=self.per, raw_mode=self.raw_mode)
-        self.right = Path(right, self.num_points, per=self.per, raw_mode=self.raw_mode)
+        self.left = Path(left, self.num_points, closed=self.closed, raw_mode=self.raw_mode)
+        self.right = Path(right, self.num_points, closed=self.closed, raw_mode=self.raw_mode)
 
         self.left_waypoints = left
         self.right_waypoints = right
@@ -95,7 +95,6 @@ class Track:
         self.left.plot(color='-k', show=False)
         if show:
             plt.show()
-
 
 class RandomTrack(Track):
     """

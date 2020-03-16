@@ -39,7 +39,7 @@ class MatplotlibWrapper:
         for opponent in self.opponents:
             self.plotVehicle(opponent.vehicle, cabcolor="-b", wheelcolor="-k")
 
-    def Advance(self, step):
+    def Advance(self, step, save=False):
         if self.step_number % self.render_steps == 0:
             self.plotVehicle(self.vehicle)
             self.plotText()
@@ -48,6 +48,10 @@ class MatplotlibWrapper:
             if self.obstacles != None:
                 self.plotObstacles()
             plt.pause(1e-9)
+            if save:
+                file_name = "fig{}.jpg".format(int(self.step_number/5))
+                print("Saving to {}".format(file_name))
+                plt.savefig(file_name, dpi=300, quality=80, optimize=True, progressive=True, format="jpg")
             if len(plt.get_fignums()) == 0:
                 return False
         self.step_number += 1

@@ -13,6 +13,7 @@
 *.slo
 *.lo
 *.o
+.vim/
 
 # Compiled Dynamic libraries
 *.so
