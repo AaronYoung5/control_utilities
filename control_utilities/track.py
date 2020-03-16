@@ -71,6 +71,9 @@ class Track:
         self.left = Path(left, self.num_points, per=self.per, raw_mode=self.raw_mode)
         self.right = Path(right, self.num_points, per=self.per, raw_mode=self.raw_mode)
 
+        self.left_waypoints = left
+        self.right_waypoints = right
+
     def checkBoundary(self, pos, n=20):
         """Checks if current position is within boundaries or not"""
         track_pos = self.center.calcClosestPoint(pos, n=n)
