@@ -8,7 +8,7 @@ from control_utilities.obstacle import RandomObstacleGenerator
 import math
 
 class ChronoWrapper:
-    def __init__(self, step_size, system, track, vehicle, terrain, irrlicht=False, obstacles=None, opponents=None, draw_barriers=False):
+    def __init__(self, step_size, system, track, vehicle, terrain, irrlicht=False, obstacles=None, opponents=None, draw_barriers=False, draw_cones=False):
         # Chrono parameters
         self.step_size = step_size
         self.irrlicht = irrlicht
@@ -32,7 +32,7 @@ class ChronoWrapper:
         self.terrain = terrain
 
         if self.irrlicht:
-            self.DrawTrack(track)
+            self.DrawTrack(track, .5)
 
             if obstacles != None:
                 self.DrawObstacles(obstacles)
@@ -46,6 +46,9 @@ class ChronoWrapper:
             if draw_barriers:
                 self.DrawBarriers(self.track.left.points)
                 self.DrawBarriers(self.track.right.points)
+            if draw_cones:
+                self.DrawCones(self.track.left.points, 'red')
+                self.DrawCones(self.track.right.points, 'green')
 
         if self.irrlicht:
             self.app = veh.ChVehicleIrrApp(self.vehicle.vehicle)
@@ -120,6 +123,32 @@ class ChronoWrapper:
                 color.SetColor(chrono.ChColor(1, 1, 1))
             box.AddAsset(color)
             self.system.Add(box)
+
+    def DrawCones(self, points, color, z=.3, n=10):
+        for p in points[::n]:
+            p.z += z
+            cmesh = chrono.ChTriangleMeshConnected()
+            if color=='red':
+                cmesh.LoadWavefrontMesh(chrono.GetChronoDataFile("sensor/cones/red_cone.obj"), False, True)
+            elif color=='green':
+                cmesh.LoadWavefrontMesh(chrono.GetChronoDataFile("sensor/cones/green_cone.obj"), False, True)
+
+            cshape = chrono.ChTriangleMeshShape()
+            cshape.SetMesh(cmesh)
+            cshape.SetName("Cone")
+            cshape.SetStatic(True)
+
+            cbody = chrono.ChBody()
+            cbody.SetPos(p)
+            cbody.AddAsset(cshape)
+            cbody.SetBodyFixed(True)
+            cbody.SetCollide(False)
+            if color=='red':
+                cbody.AddAsset(chrono.ChColorAsset(1,0,0))
+            elif color=='green':
+                cbody.AddAsset(chrono.ChColorAsset(0,1,0))
+
+            self.system.Add(cbody)
 
     def DrawObstacles(self, obstacles, z=0.0):
         self.boxes = []

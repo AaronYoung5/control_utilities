@@ -241,6 +241,9 @@ class Path():
         s = self.s[i] + dist
         return calcPosition(s)
 
+    def setIndex(self, i):
+        self.last_index = i
+
     def plot(self, color, show=True):
         """Plots path using matplotlib
 
@@ -252,6 +255,7 @@ class Path():
             if plot.show() be called
         """
         import matplotlib.pyplot as plt
+        plt.axis('equal')
 
         plt.plot(self.x, self.y, color)
         # plt.scatter(self.x,self.y, c=self.v)
