@@ -34,21 +34,21 @@ class ChronoWrapper:
         if self.irrlicht:
             self.DrawTrack(track, .5)
 
-            if obstacles != None:
-                self.DrawObstacles(obstacles)
+        if obstacles != None:
+            self.DrawObstacles(obstacles)
 
-            if opponents != None:
-                temp = dict()
-                for opponent in opponents:
-                    temp[opponent] = (opponent.vehicle, opponent.vehicle.driver)
-                self.opponents = temp
+        if opponents != None:
+            temp = dict()
+            for opponent in opponents:
+                temp[opponent] = (opponent.vehicle, opponent.vehicle.driver)
+            self.opponents = temp
 
-            if draw_barriers:
-                self.DrawBarriers(self.track.left.points)
-                self.DrawBarriers(self.track.right.points)
-            if draw_cones:
-                self.DrawCones(self.track.left.points, 'red')
-                self.DrawCones(self.track.right.points, 'green')
+        if draw_barriers:
+            self.DrawBarriers(self.track.left.points)
+            self.DrawBarriers(self.track.right.points)
+        if draw_cones:
+            self.DrawCones(self.track.left.points, 'red')
+            self.DrawCones(self.track.right.points, 'green')
 
         if self.irrlicht:
             self.app = veh.ChVehicleIrrApp(self.vehicle.vehicle)
