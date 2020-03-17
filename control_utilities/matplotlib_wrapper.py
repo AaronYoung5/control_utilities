@@ -31,7 +31,7 @@ class MatplotlibWrapper:
         plt.close()
 
     def plotTrack(self, track):
-        track.center.plot(color='-r', show=False)
+        # track.center.plot(color='-r', show=False)
         track.left.plot(color='-k', show=False)
         track.right.plot(color='-k', show=False)
 
@@ -49,7 +49,7 @@ class MatplotlibWrapper:
                 self.plotObstacles()
             plt.pause(1e-9)
             if save:
-                file_name = "fig{}.jpg".format(int(self.step_number/5))
+                file_name = "fig{}.png".format(int(self.step_number/5))
                 print("Saving to {}".format(file_name))
                 plt.savefig(file_name, dpi=300, quality=80, optimize=True, progressive=True, format="jpg")
             if len(plt.get_fignums()) == 0:
