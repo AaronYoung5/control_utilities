@@ -242,15 +242,9 @@ class Path:
         s = self.s[i] + dist
         return calcPosition(s)
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     def setIndex(self, i):
         self.last_index = i
 
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     def update_vmax(self):
         for i in range(self.length):
             v_max = self.v_max[i]
