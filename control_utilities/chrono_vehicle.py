@@ -67,7 +67,7 @@ class ChronoVehicle:
         elif vehicle_type == 'rccar':
             if sys == None:
                 self.rc_vehicle = veh.RCCar()
-                self.rc_vehicle.SetContactMethod(chrono.ChMaterialSurface.NSC)
+                self.rc_vehicle.SetContactMethod(chrono.ChMaterialSurface.SMC)
                 self.rc_vehicle.SetChassisCollisionType(veh.ChassisCollisionType_NONE)
             else:
                 self.rc_vehicle = veh.RCCar(sys)
@@ -84,7 +84,9 @@ class ChronoVehicle:
             self.rc_vehicle.SetTireVisualizationType(veh.VisualizationType_PRIMITIVES)
 
             self.vehicle = self.rc_vehicle.GetVehicle()
-            self.sys = self.rc_vehicle.GetVehicle().GetSystem()
+            self.sys = self.vehicle.GetSystem()
+
+            self.trackPoint = chrono.ChVectorD(4, 0.0, .15)
 
         elif vehicle_type == 'sedan':
             if sys == None:
@@ -144,8 +146,6 @@ class ChronoVehicle:
         self.tread = self.vehicle.GetWheeltrack(0) / 2 # [m]
         self.wb = self.vehicle.GetWheelbase() # [m]
         self.offset = [-4.0,0] # [m]
-
-        print(self.length, self.width, self.backtowheel, self.wheel_len, self.wheel_width, self.tread, self.wb)
 
     def SetTerrain(self, terrain):
         """ Sets the terrain for this class """

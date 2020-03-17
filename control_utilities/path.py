@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import scipy
 import warnings
 
+# import shapely.geometry as shp
+
 import pychrono as chrono
 
 BRK = 0.5
@@ -80,6 +82,21 @@ class Path():
         self.g = 9.81
         self.speed_max = 10
 
+        self.waypoints = points
+
+        # self.poly = shp.Polygon(points)
+        #
+        # r = abs(np.min(points) / 10)
+        # # width = .4
+        # if center:
+        #     self.poly = self.poly.buffer(-r, join_style=1).buffer(r, join_style=1)
+        # print(self.poly.boundary.interpolate(0.10, normalized=True))
+        # # print(self.poly.exterior.coords.xy)
+        # # get_methods(self.poly.exterior)
+        # self.x, self.y = self.poly.exterior.coords.xy
+        #
+        # points = np.array(list(zip(self.x,self.y)))
+        # print(points)
         points = np.array(points)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -314,6 +331,9 @@ class Path():
         s = self.s[i] + dist
         return calcPosition(s)
 
+    def setIndex(self, i):
+        self.last_index = i
+
     def plot(self, color, show=True):
         """Plots path using matplotlib
 
@@ -325,6 +345,7 @@ class Path():
             if plot.show() be called
         """
         import matplotlib.pyplot as plt
+        plt.axis('equal')
 
         plt.plot(self.x, self.y, color)
         # plt.scatter(self.x,self.y, c=self.v)
