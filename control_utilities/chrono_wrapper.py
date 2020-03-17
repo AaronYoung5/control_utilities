@@ -37,6 +37,7 @@ class ChronoWrapper:
             if draw_track:
                 self.DrawPath(track.center)
 
+<<<<<<< Updated upstream
         if obstacles != None:
             self.DrawObstacles(obstacles)
 
@@ -52,6 +53,20 @@ class ChronoWrapper:
         if draw_cones:
             self.DrawCones(self.track.left.points, 'red')
             self.DrawCones(self.track.right.points, 'green')
+=======
+            if obstacles != None:
+                self.DrawObstacles(obstacles)
+
+            if opponents != None:
+                temp = dict()
+                for opponent in opponents:
+                    temp[opponent] = (opponent.vehicle, opponent.vehicle.driver)
+                self.opponents = temp
+
+            if draw_barriers:
+                self.DrawBarriers(self.track.left.points)
+                self.DrawBarriers(self.track.right.points)
+>>>>>>> Stashed changes
 
         if self.irrlicht and bind_all:
             self.app = veh.ChVehicleIrrApp(self.vehicle.vehicle)
