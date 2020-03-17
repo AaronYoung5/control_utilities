@@ -111,9 +111,6 @@ class Path():
         self.brake = brake
         self.acc = acc
 
-        self.update_vmax()
-        self.update_profile()
-
     def update_vmax(self):
         for i in range(self.length):
             v_max = self.v_max[i]
@@ -318,7 +315,7 @@ class Path():
         return calcPosition(s)
 
     def setIndex(self, i):
-        self.last_index = i 
+        self.last_index = i
 
     def plot(self, color, show=True):
         """Plots path using matplotlib
