@@ -10,7 +10,7 @@ import math
 import os
 
 class ChronoWrapper:
-    def __init__(self, step_size, system, track, vehicle, terrain, irrlicht=False, obstacles=None, opponents=None, draw_barriers=False, draw_track=True, bind_all=True, pov=False, camera_save=False):
+    def __init__(self, step_size, system, track, vehicle, terrain, irrlicht=False, obstacles=None, opponents=None, draw_barriers=False, draw_cones=False, draw_track=True, bind_all=True, pov=False, camera_save=False):
         # Chrono parameters
         self.step_size = step_size
         self.irrlicht = irrlicht

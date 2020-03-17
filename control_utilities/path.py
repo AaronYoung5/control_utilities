@@ -73,7 +73,7 @@ class Path():
         calculates pose (position and orientation) at a point along the path
 
     """
-    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0, brake=1, acc=1):
+    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0, brake=1.0, acc=1.0):
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 100
@@ -123,7 +123,7 @@ class Path():
                 # Check v_max of all points before it
                 index = i-j
                 s += self.ps[index]
-                local_v_max = np.sqrt(2*BRK*s + np.square(v_max))
+                local_v_max = np.sqrt(2*self.brake*s + np.square(v_max))
                 if local_v_max < self.v_max[index]:
                     self.v_max[index] = local_v_max
 
@@ -139,17 +139,17 @@ class Path():
             v_max = self.v_max[i+1]
 
             if current_speed <= v_max:
-                top_speed = np.sqrt(2*ACC*ps + current_speed**2)
+                top_speed = np.sqrt(2*self.acc*ps + current_speed**2)
                 v_end = v_max if top_speed > v_max else top_speed
-                acc_distance = (v_end**2 - current_speed**2) / (2 * ACC)
-                time = (top_speed-current_speed)/ACC + (ps-acc_distance)/v_end
+                acc_distance = (v_end**2 - current_speed**2) / (2 * self.acc)
+                time = (top_speed-current_speed)/self.acc + (ps-acc_distance)/v_end
 
                 t.append(time)
                 current_speed = v_end
             else:
                 v_end = v_max
-                brk_distance = (current_speed**2 - v_end**2) / (2 * BRK)
-                time = (ps-brk_distance)/current_speed + (current_speed-v_end)/BRK
+                brk_distance = (current_speed**2 - v_end**2) / (2 * self.brake)
+                time = (ps-brk_distance)/current_speed + (current_speed-v_end)/self.brake
                 t.append(time)
 
                 current_speed = v_end
