@@ -1,14 +1,16 @@
 import pychrono as chrono
 import pychrono.vehicle as veh
 import pychrono.irrlicht as chronoirr
+import pychrono.postprocess as postprocess
 
 from control_utilities.chrono_utilities import checkFile
 from control_utilities.obstacle import RandomObstacleGenerator
 
 import math
+import os
 
 class ChronoWrapper:
-    def __init__(self, step_size, system, track, vehicle, terrain, irrlicht=False, obstacles=None, opponents=None, draw_barriers=False, draw_cones=False):
+    def __init__(self, step_size, system, track, vehicle, terrain, irrlicht=False, obstacles=None, opponents=None, draw_barriers=False, draw_track=True, bind_all=True, pov=False, camera_save=False):
         # Chrono parameters
         self.step_size = step_size
         self.irrlicht = irrlicht
@@ -32,25 +34,26 @@ class ChronoWrapper:
         self.terrain = terrain
 
         if self.irrlicht:
-            self.DrawTrack(track, .5)
+            if draw_track:
+                self.DrawPath(track.center)
 
-            if obstacles != None:
-                self.DrawObstacles(obstacles)
+        if obstacles != None:
+            self.DrawObstacles(obstacles)
 
-            if opponents != None:
-                temp = dict()
-                for opponent in opponents:
-                    temp[opponent] = (opponent.vehicle, opponent.vehicle.driver)
-                self.opponents = temp
+        if opponents != None:
+            temp = dict()
+            for opponent in opponents:
+                temp[opponent] = (opponent.vehicle, opponent.vehicle.driver)
+            self.opponents = temp
 
-            if draw_barriers:
-                self.DrawBarriers(self.track.left.points)
-                self.DrawBarriers(self.track.right.points)
-            if draw_cones:
-                self.DrawCones(self.track.left.points, 'red')
-                self.DrawCones(self.track.right.points, 'green')
+        if draw_barriers:
+            self.DrawBarriers(self.track.left.points)
+            self.DrawBarriers(self.track.right.points)
+        if draw_cones:
+            self.DrawCones(self.track.left.points, 'red')
+            self.DrawCones(self.track.right.points, 'green')
 
-        if self.irrlicht:
+        if self.irrlicht and bind_all:
             self.app = veh.ChVehicleIrrApp(self.vehicle.vehicle)
             self.app.SetHUDLocation(500, 20)
             self.app.SetSkyBox()
@@ -77,7 +80,75 @@ class ChronoWrapper:
 
             self.app.AssetUpdateAll()
 
-    def DrawTrack(self, track, z=0.0):
+        self.pov = pov
+        if self.pov:
+            self.pov_exporter = postprocess.ChPovRay(self.system)
+
+             # Sets some file names for in-out processes.
+            self.pov_exporter.SetTemplateFile(chrono.GetChronoDataFile('_template_POV.pov'))
+            self.pov_exporter.SetOutputScriptFile("rendering_frames.pov")
+            if not os.path.exists("output"):
+                os.mkdir("output")
+            if not os.path.exists("anim"):
+                os.mkdir("anim")
+            self.pov_exporter.SetOutputDataFilebase("output/my_state")
+            self.pov_exporter.SetPictureFilebase("anim/picture")
+
+            self.pov_exporter.SetCamera(chrono.ChVectorD(0.2,0.3,0.5), chrono.ChVectorD(0,0,0), 35)
+            self.pov_exporter.SetLight(chrono.ChVectorD(-2,2,-1), chrono.ChColor(1.1,1.2,1.2), True)
+            self.pov_exporter.SetPictureSize(1280,720)
+            self.pov_exporter.SetAmbientLight(chrono.ChColor(2,2,2))
+
+             # Add additional POV objects/lights/materials in the following way
+            self.pov_exporter.SetCustomPOVcommandsScript(
+            '''
+            light_source{ <1,3,1.5> color rgb<1.1,1.1,1.1> }
+            Grid(0.05,0.04, rgb<0.7,0.7,0.7>, rgbt<1,1,1,1>)
+            ''')
+
+             # Tell which physical items you want to render
+            self.pov_exporter.AddAll()
+
+             # Tell that you want to render the contacts
+            # self.pov_exporter.SetShowContacts(True,
+            #                             postprocess.ChPovRay.SYMBOL_VECTOR_SCALELENGTH,
+            #                             0.2,    # scale
+            #                             0.0007, # width
+            #                             0.1,    # max size
+            #                             True,0,0.5 ) # colormap on, blue at 0, red at 0.5
+
+             # 1) Create the two .pov and .ini files for POV-Ray (this must be done
+             #    only once at the beginning of the simulation).
+            self.pov_exporter.ExportScript()
+
+    def BindAll(self):
+        self.app = veh.ChVehicleIrrApp(self.vehicle.vehicle)
+        self.app.SetHUDLocation(500, 20)
+        self.app.SetSkyBox()
+        self.app.AddTypicalLogo()
+        self.app.AddTypicalLights(chronoirr.vector3df(-150., -150., 200.), chronoirr.vector3df(-150., 150., 200.), 100, 100)
+        self.app.AddTypicalLights(chronoirr.vector3df(150., -150., 200.), chronoirr.vector3df(150., 150., 200.), 100, 100)
+        self.app.EnableGrid(False)
+        self.app.SetChaseCamera(self.vehicle.trackPoint, 6.0, 0.5)
+
+        self.app.SetTimestep(self.step_size)
+        # ---------------------------------------------------------------------
+        #
+        #  Create an Irrlicht application to visualize the system
+        #
+        # ==IMPORTANT!== Use this function for adding a ChIrrNodeAsset to all items
+        # in the system. These ChIrrNodeAsset assets are 'proxies' to the Irrlicht meshes.
+        # If you need a finer control on which item really needs a visualization proxy
+        # Irrlicht, just use application.AssetBind(myitem); on a per-item basis.
+
+        self.app.AssetBindAll()
+
+        # ==IMPORTANT!== Use this function for 'converting' into Irrlicht meshes the assets
+        # that you added to the bodies into 3D shapes, they can be visualized by Irrlicht!
+
+        self.app.AssetUpdateAll()
+
+    def DrawPath(self, path, z=0.0, r=0.0, g=0.8, b=0.0):
         road = self.system.NewBody()
         road.SetBodyFixed(True)
         self.system.AddBody(road)
@@ -89,14 +160,14 @@ class ChronoWrapper:
                 ch_path.push_back(point)
             return chrono.ChBezierCurve(ch_path)
 
-        num_points = len(track.center.x)
+        num_points = len(path.x)
         path_asset = chrono.ChLineShape()
-        path_asset.SetLineGeometry(chrono.ChLineBezier(toChPath(track.center)))
-        path_asset.SetColor(chrono.ChColor(0.0, 0.8, 0.0))
+        path_asset.SetLineGeometry(chrono.ChLineBezier(toChPath(path)))
+        path_asset.SetColor(chrono.ChColor(r,g,b))
         path_asset.SetNumRenderPoints(max(2 * num_points, 400))
         road.AddAsset(path_asset)
 
-    def DrawBarriers(self, points, n=10, height=1, width=1):
+    def DrawBarriers(self, points, n=5, height=1, width=1):
         points = points[::n]
         if points[-1] != points[0]:
             points.append(points[-1])
@@ -216,6 +287,9 @@ class ChronoWrapper:
         if self.irrlicht:
             self.app.Advance(step)
             self.step_number += 1
+
+        if self.pov:
+            self.pov_exporter.ExportData()
 
         self.system.DoStepDynamics(step)
 

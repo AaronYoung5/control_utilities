@@ -8,14 +8,13 @@ from matplotlib import pyplot as plt
 import scipy
 import warnings
 
-# import shapely.geometry as shp
-
 import pychrono as chrono
 
 BRK = 50
 ACC = 20
 
 class Path():
+
     """
     Path class that generates a spline through the provided points. Spline is defined by a discrete number of points.
 
@@ -77,26 +76,12 @@ class Path():
         calculates pose (position and orientation) at a point along the path
 
     """
-    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0):
+    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0, brake=10.0, acc=5.0):
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 100
 
         self.waypoints = points
-
-        # self.poly = shp.Polygon(points)
-        #
-        # r = abs(np.min(points) / 10)
-        # # width = .4
-        # if center:
-        #     self.poly = self.poly.buffer(-r, join_style=1).buffer(r, join_style=1)
-        # print(self.poly.boundary.interpolate(0.10, normalized=True))
-        # # print(self.poly.exterior.coords.xy)
-        # # get_methods(self.poly.exterior)
-        # self.x, self.y = self.poly.exterior.coords.xy
-        #
-        # points = np.array(list(zip(self.x,self.y)))
-        # print(points)
         points = np.array(points)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -214,10 +199,11 @@ class Path():
         return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2)
 
     def distance(self, x, y):
+
         """
         Compute distance from beginning given two points.
         """
-        return np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+        return np.cumsum(pd)
 
     def yaw(self, dx, dy):
         """
@@ -245,13 +231,13 @@ class Path():
         Calculates the index of the closest point on the path
         """
         besti = self.last_index
-        bestd = self.distance([pos.x, self.x[self.last_index]],[pos.y, self.y[self.last_index]])
+        bestd = self.point_distance([pos.x, self.x[self.last_index]],[pos.y, self.y[self.last_index]])
         for i in range(max(0, self.last_index-n), self.last_index+n):
             if i >= self.length-1:
                 ii = i-self.length
             else:
                 ii = i
-            temp = self.distance([pos.x, self.x[ii]],[pos.y, self.y[ii]])
+            temp = self.point_distance([pos.x, self.x[ii]],[pos.y, self.y[ii]])
             if temp <= bestd:
                 bestd = temp
                 besti = ii
@@ -334,6 +320,78 @@ class Path():
     def setIndex(self, i):
         self.last_index = i
 
+    def update_vmax(self):
+        for i in range(self.length):
+            v_max = self.v_max[i]
+
+            s = 0
+            for j in range(1, i+1):
+                # Check v_max of all points before it
+                index = i-j
+                s += self.ps[index]
+                local_v_max = np.sqrt(2*self.brake*s + np.square(v_max))
+                if local_v_max < self.v_max[index]:
+                    self.v_max[index] = local_v_max
+
+    def update_profile(self):
+        v = []
+        t = []
+
+        current_speed = 0
+        for i in range(len(self.ps)):
+            v.append(current_speed)
+
+            ps = self.ps[i]
+            v_max = self.v_max[i+1]
+
+            if current_speed <= v_max:
+                top_speed = np.sqrt(2*self.acc*ps + current_speed**2)
+                v_end = v_max if top_speed > v_max else top_speed
+                acc_distance = (v_end**2 - current_speed**2) / (2 * self.acc)
+                time = (top_speed-current_speed)/self.acc + (ps-acc_distance)/v_end
+
+                t.append(time)
+                current_speed = v_end
+            else:
+                v_end = v_max
+                brk_distance = (current_speed**2 - v_end**2) / (2 * self.brake)
+                time = (ps-brk_distance)/current_speed + (current_speed-v_end)/self.brake
+                t.append(time)
+
+                current_speed = v_end
+
+        self.v = np.array(v)
+        self.t = np.array(t)
+
+    def plot_speed_profile(self):
+        # Speed
+        plt.plot(self.s, self.v, "g-")
+
+        # Time
+        plt.plot(self.s, self.t, "y-")
+
+        # Curvature
+        # plt.plot(np.abs(self.k*100), "b-")
+
+        # Max Speed based on global curvature
+        # plt.plot(np.abs(self.v_max), "k-")
+
+        # Throttle
+        # plt.plot(np.array(self.adjust_a)*10+5, "c+")
+
+        plt.show()
+
+    def plot_path_speed(self):
+        # last_v = 0
+
+        for i in range(self.length-1):
+            plt.plot(self.x[i], self.y[i], c=str(self.v[i]/10/1.3), marker="o")
+            # if self.v[i] >= last_v:
+            #     plt.plot(self.x[i], self.y[i], "g+")
+            # else:
+            #     plt.plot(self.x[i], self.y[i], "r+")
+            # last_v = self.v[i]
+
     def plot(self, color, show=True):
         """Plots path using matplotlib
 
@@ -352,39 +410,6 @@ class Path():
 
         if show:
             plt.show()
-
-    @staticmethod
-    def calcPose(p1, p2, reversed=False):
-        """Calculates pose (position and orientation) at a point along the path
-
-        Parameters
-        ----------
-        p1 : ChVectorD
-            first point to use
-        p2 : ChVectorD
-            second point to use
-        reversed : bool, optional
-            if orientation should be flipped
-
-        Returns
-        -------
-        pos : ChVectorD
-            the position at the desired point
-        rot : ChQuaternionD
-            the orientation at the desired point
-
-        """
-        pos = p1
-
-        vec = p2 - p1
-        theta = math.atan2((vec%chrono.ChVectorD(1,0,0)).Length(),vec^chrono.ChVectorD(1,0,0))
-        # theta = math.acos((p2^p1)/(p2.Length() * p1.Length()))
-        if reversed:
-            theta *= -1
-        rot = chrono.ChQuaternionD()
-        rot.Q_from_AngZ(theta)
-
-        return pos, rot
 
     def __len__(self):
         return len(self.x)
