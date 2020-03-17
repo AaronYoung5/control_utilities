@@ -10,8 +10,8 @@ import warnings
 
 import pychrono as chrono
 
-BRK = 10
-ACC = 5
+BRK = 0.5
+ACC = 0.1
 
 class Path():
     """
@@ -289,13 +289,13 @@ class Path():
         Determines the speed at the closest point along the path
         """
         i = self.calcIndex(pos, n=n)
-        return self.v_max[i]
+        return self.v[i]
 
     def getSpeed(self, i):
         """
         Gets speed on the path given an index
         """
-        return self.v_max[i]
+        return self.v[i]
 
     def calcPosition(self, s):
         """
