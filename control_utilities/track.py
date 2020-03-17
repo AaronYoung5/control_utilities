@@ -47,6 +47,7 @@ class Track:
         self.center = Path(center, num_points, closed=closed, raw_mode=raw_mode)
         self.width = width
         self.num_points = num_points
+        self.k = k
 
     def generateTrack(self, z=0.0):
         """Generates the left and right boundaries from the centerline"""

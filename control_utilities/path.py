@@ -7,6 +7,8 @@ from scipy.interpolate import splprep, splev
 import scipy
 import warnings
 
+# import shapely.geometry as shp
+
 import pychrono as chrono
 
 class Path():
@@ -76,6 +78,21 @@ class Path():
         self.g = 9.81
         self.speed_max = 10
 
+        self.waypoints = points
+
+        # self.poly = shp.Polygon(points)
+        #
+        # r = abs(np.min(points) / 10)
+        # # width = .4
+        # if center:
+        #     self.poly = self.poly.buffer(-r, join_style=1).buffer(r, join_style=1)
+        # print(self.poly.boundary.interpolate(0.10, normalized=True))
+        # # print(self.poly.exterior.coords.xy)
+        # # get_methods(self.poly.exterior)
+        # self.x, self.y = self.poly.exterior.coords.xy
+        #
+        # points = np.array(list(zip(self.x,self.y)))
+        # print(points)
         points = np.array(points)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -91,6 +108,7 @@ class Path():
         self.ddx, self.ddy = splev(u_new, tck, der=2)
         self.length = len(self.x)
         self.k = self.curvature(self.dx, self.dy, self.ddx, self.ddy)
+        self.v = self.speed(self.x, self.y, self.k)
         self.s = self.distance(self.x, self.y)
         self.pd = self.point_distance()
         self.yaw = self.yaw(self.dx, self.dy)
