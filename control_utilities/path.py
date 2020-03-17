@@ -10,9 +10,6 @@ import warnings
 
 import pychrono as chrono
 
-BRK = 50
-ACC = 20
-
 class Path():
 
     """
@@ -76,7 +73,7 @@ class Path():
         calculates pose (position and orientation) at a point along the path
 
     """
-    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0, brake=10.0, acc=5.0):
+    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0, brake=1, acc=1):
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 100
@@ -110,6 +107,9 @@ class Path():
         self.last_dist = 0
         self.track_length = self.s[-1]
         self.times_looped = 0
+
+        self.brake = brake
+        self.acc = acc
 
         self.update_vmax()
         self.update_profile()
@@ -203,7 +203,7 @@ class Path():
         """
         Compute distance from beginning given two points.
         """
-        return np.cumsum(pd)
+        return np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
 
     def yaw(self, dx, dy):
         """
