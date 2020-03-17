@@ -12,8 +12,8 @@ import warnings
 
 import pychrono as chrono
 
-BRK = 0.5
-ACC = 0.1
+BRK = 50
+ACC = 20
 
 class Path():
     """
@@ -80,7 +80,7 @@ class Path():
     def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0):
         self.u_s = .25
         self.g = 9.81
-        self.speed_max = 10
+        self.speed_max = 100
 
         self.waypoints = points
 
@@ -113,7 +113,7 @@ class Path():
         self.length = len(self.x)
         self.k = self.curvature(self.dx, self.dy, self.ddx, self.ddy)
         self.ps = self.point_distance(self.x, self.y)
-        self.s = self.distance(self.ps)
+        self.s = self.distance(self.x, self.y)
         self.yaw = self.yaw(self.dx, self.dy)
         self.v_max = self.speed(self.x, self.y, self.k)
 
@@ -213,11 +213,11 @@ class Path():
         """
         return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2)
 
-    def distance(self, pd):
+    def distance(self, x, y):
         """
         Compute distance from beginning given two points.
         """
-        return np.cumsum(pd)
+        return np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
 
     def yaw(self, dx, dy):
         """
