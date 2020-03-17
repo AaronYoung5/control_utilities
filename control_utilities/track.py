@@ -89,6 +89,7 @@ class Track:
             if plot.show() be called
         """
         import matplotlib.pyplot as plt
+        plt.axis('equal')
         if centerline:
             self.center.plot(color='-r', show=False)
         self.right.plot(color='-k', show=False)

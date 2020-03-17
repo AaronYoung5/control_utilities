@@ -18,6 +18,7 @@ class ChronoTerrain:
         self.sys = sys
 
         if terrain_type == 'json':
+            import os
             # JSON files for terrain
             self.rigidterrain_file = veh.GetDataPath() + os.path.join('terrain', 'RigidPlane.json')
             checkFile(self.rigidterrain_file)
@@ -48,6 +49,33 @@ class ChronoTerrain:
                 visual_asset.material_list.append(vis_mat)
             except:
                 print("Not Visual Material")
+
+        elif terrain_type == 'hallway':
+            y_max = 5.65
+            x_max = 23
+            offset = chrono.ChVectorD(-x_max/2, -y_max/2, .21)
+            offsetF = chrono.ChVectorF(offset.x, offset.y, offset.z)
+
+            self.terrain = veh.RigidTerrain(self.sys)
+            coord_sys = chrono.ChCoordsysD(offset, chrono.ChQuaternionD(1,0,0,0))
+            patch = self.terrain.AddPatch(coord_sys, chrono.GetChronoDataFile("sensor/textures/hallway.obj"), "mesh", 0.01, False)
+
+
+            vis_mesh = chrono.ChTriangleMeshConnected()
+            vis_mesh.LoadWavefrontMesh(chrono.GetChronoDataFile("sensor/textures/hallway.obj"), True, True)
+
+            trimesh_shape = chrono.ChTriangleMeshShape()
+            trimesh_shape.SetMesh(vis_mesh)
+            trimesh_shape.SetName("mesh_name")
+            trimesh_shape.SetStatic(True)
+
+            patch.GetGroundBody().AddAsset(trimesh_shape)
+
+            patch.SetContactFrictionCoefficient(0.9)
+            patch.SetContactRestitutionCoefficient(0.01)
+            patch.SetContactMaterialProperties(2e7, 0.3)
+
+            self.terrain.Initialize()
 
     def Synchronize(self, time):
         self.terrain.Synchronize(time)
