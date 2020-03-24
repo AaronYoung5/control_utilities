@@ -31,7 +31,7 @@ class Track:
         plots the track using matplotlib
 
     """
-    def __init__(self, center, width=10, num_points=1000, closed=True, raw_mode=False, s=0.0):
+    def __init__(self, center, width=10, num_points=1000, closed=True, raw_mode=False, s=0.0, x_min=None, x_max=None, y_min=None, y_max=None):
         """
         Parameters
         ----------
@@ -47,6 +47,24 @@ class Track:
         self.center = Path(center, num_points, closed=closed, raw_mode=raw_mode, s=s)
         self.width = width
         self.num_points = num_points
+
+        if x_max == None:
+            self.x_max = max(self.center.x) + self.width
+        else:
+            self.x_max = x_max
+        if y_max == None:
+            self.y_max = max(self.center.y) + self.width
+        else:
+            self.y_max = y_max
+
+        if x_min == None:
+            self.x_min = min(self.center.x) - self.width
+        else:
+            self.x_max = x_min
+        if y_max == None:
+            self.y_min = min(self.center.y) - self.width
+        else:
+            self.y_min = y_min
 
     def generateTrack(self, z=0.0):
         """Generates the left and right boundaries from the centerline"""
@@ -165,7 +183,7 @@ class RandomTrack(Track):
             used to reverse the direction the path is created
         """
         self.points = self.generator.generatePath(seed=seed,reversed=reversed)
-        Track.__init__(self, self.points, width=self.width, num_points=num_points)
+        Track.__init__(self, self.points, width=self.width, num_points=num_points, x_max=self.x_max, y_max=self.y_max)
         super(RandomTrack, self).generateTrack()
 
     def plot(self, seed=1.0, show=True):

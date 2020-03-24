@@ -60,7 +60,6 @@ class ChronoTerrain:
             coord_sys = chrono.ChCoordsysD(offset, chrono.ChQuaternionD(1,0,0,0))
             patch = self.terrain.AddPatch(coord_sys, chrono.GetChronoDataFile("sensor/textures/hallway.obj"), "mesh", 0.01, False)
 
-
             vis_mesh = chrono.ChTriangleMeshConnected()
             vis_mesh.LoadWavefrontMesh(chrono.GetChronoDataFile("sensor/textures/hallway.obj"), True, True)
 
