@@ -1,7 +1,7 @@
 import pychrono as chrono
 import pychrono.vehicle as veh
 import pychrono.irrlicht as chronoirr
-import pychrono.postprocess as postprocess
+# import pychrono.postprocess as postprocess
 
 from control_utilities.chrono_utilities import checkFile
 from control_utilities.obstacle import RandomObstacleGenerator
@@ -35,7 +35,7 @@ class ChronoWrapper:
 
         if self.irrlicht:
             if draw_track:
-                self.DrawPath(track.center)
+                self.DrawPath(track.center, z=.15)
 
         if obstacles != None:
             self.DrawObstacles(obstacles)
@@ -81,45 +81,45 @@ class ChronoWrapper:
             self.app.AssetUpdateAll()
 
         self.pov = pov
-        if self.pov:
-            self.pov_exporter = postprocess.ChPovRay(self.system)
-
-             # Sets some file names for in-out processes.
-            self.pov_exporter.SetTemplateFile(chrono.GetChronoDataFile('_template_POV.pov'))
-            self.pov_exporter.SetOutputScriptFile("rendering_frames.pov")
-            if not os.path.exists("output"):
-                os.mkdir("output")
-            if not os.path.exists("anim"):
-                os.mkdir("anim")
-            self.pov_exporter.SetOutputDataFilebase("output/my_state")
-            self.pov_exporter.SetPictureFilebase("anim/picture")
-
-            self.pov_exporter.SetCamera(chrono.ChVectorD(0.2,0.3,0.5), chrono.ChVectorD(0,0,0), 35)
-            self.pov_exporter.SetLight(chrono.ChVectorD(-2,2,-1), chrono.ChColor(1.1,1.2,1.2), True)
-            self.pov_exporter.SetPictureSize(1280,720)
-            self.pov_exporter.SetAmbientLight(chrono.ChColor(2,2,2))
-
-             # Add additional POV objects/lights/materials in the following way
-            self.pov_exporter.SetCustomPOVcommandsScript(
-            '''
-            light_source{ <1,3,1.5> color rgb<1.1,1.1,1.1> }
-            Grid(0.05,0.04, rgb<0.7,0.7,0.7>, rgbt<1,1,1,1>)
-            ''')
-
-             # Tell which physical items you want to render
-            self.pov_exporter.AddAll()
-
-             # Tell that you want to render the contacts
-            # self.pov_exporter.SetShowContacts(True,
-            #                             postprocess.ChPovRay.SYMBOL_VECTOR_SCALELENGTH,
-            #                             0.2,    # scale
-            #                             0.0007, # width
-            #                             0.1,    # max size
-            #                             True,0,0.5 ) # colormap on, blue at 0, red at 0.5
-
-             # 1) Create the two .pov and .ini files for POV-Ray (this must be done
-             #    only once at the beginning of the simulation).
-            self.pov_exporter.ExportScript()
+        # if self.pov:
+            # self.pov_exporter = postprocess.ChPovRay(self.system)
+            #
+            #  # Sets some file names for in-out processes.
+            # self.pov_exporter.SetTemplateFile(chrono.GetChronoDataFile('_template_POV.pov'))
+            # self.pov_exporter.SetOutputScriptFile("rendering_frames.pov")
+            # if not os.path.exists("output"):
+            #     os.mkdir("output")
+            # if not os.path.exists("anim"):
+            #     os.mkdir("anim")
+            # self.pov_exporter.SetOutputDataFilebase("output/my_state")
+            # self.pov_exporter.SetPictureFilebase("anim/picture")
+            #
+            # self.pov_exporter.SetCamera(chrono.ChVectorD(0.2,0.3,0.5), chrono.ChVectorD(0,0,0), 35)
+            # self.pov_exporter.SetLight(chrono.ChVectorD(-2,2,-1), chrono.ChColor(1.1,1.2,1.2), True)
+            # self.pov_exporter.SetPictureSize(1280,720)
+            # self.pov_exporter.SetAmbientLight(chrono.ChColor(2,2,2))
+            #
+            #  # Add additional POV objects/lights/materials in the following way
+            # self.pov_exporter.SetCustomPOVcommandsScript(
+            # '''
+            # light_source{ <1,3,1.5> color rgb<1.1,1.1,1.1> }
+            # Grid(0.05,0.04, rgb<0.7,0.7,0.7>, rgbt<1,1,1,1>)
+            # ''')
+            #
+            #  # Tell which physical items you want to render
+            # self.pov_exporter.AddAll()
+            #
+            #  # Tell that you want to render the contacts
+            # # self.pov_exporter.SetShowContacts(True,
+            # #                             postprocess.ChPovRay.SYMBOL_VECTOR_SCALELENGTH,
+            # #                             0.2,    # scale
+            # #                             0.0007, # width
+            # #                             0.1,    # max size
+            # #                             True,0,0.5 ) # colormap on, blue at 0, red at 0.5
+            #
+            #  # 1) Create the two .pov and .ini files for POV-Ray (this must be done
+            #  #    only once at the beginning of the simulation).
+            # self.pov_exporter.ExportScript()
 
     def BindAll(self):
         self.app = veh.ChVehicleIrrApp(self.vehicle.vehicle)
@@ -288,8 +288,8 @@ class ChronoWrapper:
             self.app.Advance(step)
             self.step_number += 1
 
-        if self.pov:
-            self.pov_exporter.ExportData()
+        # if self.pov:
+        #     self.pov_exporter.ExportData()
 
         self.system.DoStepDynamics(step)
 

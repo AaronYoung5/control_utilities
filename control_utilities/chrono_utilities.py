@@ -21,6 +21,7 @@ def calcPose(p1, p2, z=0.0):
         ang *= -1
     rot.Q_from_AngZ(ang)
 
+    loc.z = z
     return loc, rot
 
 def calcAngle(p1, p2, z=0.0):
