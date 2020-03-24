@@ -31,7 +31,7 @@ class Track:
         plots the track using matplotlib
 
     """
-    def __init__(self, center, width=10, num_points=1000, closed=True, raw_mode=False):
+    def __init__(self, center, width=10, num_points=1000, closed=True, raw_mode=False, s=0.0):
         """
         Parameters
         ----------
@@ -44,7 +44,7 @@ class Track:
         """
         self.raw_mode = raw_mode
         self.closed = closed
-        self.center = Path(center, num_points, closed=closed, raw_mode=raw_mode)
+        self.center = Path(center, num_points, closed=closed, raw_mode=raw_mode, s=s)
         self.width = width
         self.num_points = num_points
 
@@ -78,6 +78,22 @@ class Track:
         track_pos = self.center.calcClosestPoint(pos, n=n)
         dist = (track_pos - pos).Length()
         return dist < (width / 2)
+
+    def setBoundaries(self, left, right):
+        self.left = left
+        self.right = right
+
+    @staticmethod
+    def FromBoundaries(left, right, width=10, num_points=1000, closed=True, raw_mode=False):
+        """ Generates Track from left and right Path's """
+        center = []
+        for i, lp in enumerate(left.points):
+            rp = min(right.points, key = lambda p: (p-lp).Length())
+            mid = [(rp.x + lp.x)/2, (rp.y + lp.y)/2]
+            center.append(mid)
+        track = Track(center, width=width, num_points=num_points, closed=closed, raw_mode=raw_mode)
+        track.setBoundaries(left, right)
+        return track
 
     def plot(self, show=True, centerline=True):
         """Plots track using matplotlib

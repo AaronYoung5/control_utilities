@@ -108,7 +108,7 @@ class ChronoVehicle:
             self.sedan.SetTireVisualizationType(veh.VisualizationType_PRIMITIVES)
 
             self.vehicle = self.sedan.GetVehicle()
-            self.sys = self.vehicle.GetVehicle().GetSystem()
+            self.sys = self.vehicle.GetSystem()
 
         # -------------
         # Create driver

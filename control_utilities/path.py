@@ -73,7 +73,7 @@ class Path():
         calculates pose (position and orientation) at a point along the path
 
     """
-    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0, brake=1.0, acc=1.0):
+    def __init__(self, points, num_points=1000, closed=True, raw_mode=False, z=0.0, brake=1.0, acc=1.0, s=0.0):
         self.u_s = .25
         self.g = 9.81
         self.speed_max = 100
@@ -82,7 +82,7 @@ class Path():
         points = np.array(points)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
-            tck, u = splprep(points.T, s=0.0, per=closed)
+            tck, u = splprep(points.T, s=s, per=closed)
 
         if raw_mode:
             u_new = u
