@@ -96,7 +96,7 @@ def setDataDirectory():
     CONDA_PREFIX = os.environ.get('CONDA_PREFIX')
     CHRONO_DATA_DIR = os.environ.get('CHRONO_DATA_DIR')
     if CONDA_PREFIX and not CHRONO_DATA_DIR:
-        CHRONO_DATA_DIR = os.path.join(CONDA_PREFIX, "share", "chrono", "data")
+        CHRONO_DATA_DIR = os.path.join(CONDA_PREFIX, "share", "chrono", "data", "")
     if not CHRONO_DATA_DIR:
         CHRONO_DATA_DIR = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parents[1], "chrono", "data", "")
     elif not CHRONO_DATA_DIR:
