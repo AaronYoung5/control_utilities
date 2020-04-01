@@ -5,7 +5,7 @@ from control_utilities.driver import Driver
 from control_utilities.chrono_utilities import checkFile
 
 class ChronoVehicle:
-    def __init__(self, step_size, sys, controller, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), vis_balls=False, render_step_size=1.0/60):
+    def __init__(self, step_size, sys, controller, irrlicht=False, vehicle_type='json', initLoc=chrono.ChVectorD(0,0,0), initRot=chrono.ChQuaternionD(1,0,0,0), vis_balls=False, render_step_size=1.0/60, mesh=False):
         # Chrono parameters
         self.step_size = step_size
         self.irrlicht = irrlicht
@@ -22,6 +22,11 @@ class ChronoVehicle:
 
         # Point on chassis tracked by the camera (Irrlicht only)
         self.trackPoint = chrono.ChVectorD(0.0, 0.0, 1.75)
+
+        if mesh:
+            visualization_type = veh.VisualizationType_MESH
+        else:
+            visualization_type = veh.VisualizationType_PRIMITIVES
 
         if vehicle_type == 'json':
 
@@ -45,10 +50,11 @@ class ChronoVehicle:
             else:
                 self.wheeled_vehicle = veh.WheeledVehicle(sys, self.vehicle_file)
             self.wheeled_vehicle.Initialize(chrono.ChCoordsysD(self.initLoc, self.initRot))
-            self.wheeled_vehicle.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+
+            self.wheeled_vehicle.SetWheelVisualizationType(visualization_type)
+            self.wheeled_vehicle.SetChassisVisualizationType(visualization_type)
             self.wheeled_vehicle.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
             self.wheeled_vehicle.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
-            self.wheeled_vehicle.SetWheelVisualizationType(veh.VisualizationType_NONE)
 
             # Create and initialize the powertrain system
             self.powertrain = veh.SimplePowertrain(self.simplepowertrain_file)
@@ -57,9 +63,9 @@ class ChronoVehicle:
             # Create and initialize the tires
             for axle in self.wheeled_vehicle.GetAxles():
                 tireL = veh.RigidTire(self.rigidtire_file)
-                self.wheeled_vehicle.InitializeTire(tireL, axle.m_wheels[0], veh.VisualizationType_MESH)
+                self.wheeled_vehicle.InitializeTire(tireL, axle.m_wheels[0], visualization_type)
                 tireR = veh.RigidTire(self.rigidtire_file)
-                self.wheeled_vehicle.InitializeTire(tireR, axle.m_wheels[1], veh.VisualizationType_MESH)
+                self.wheeled_vehicle.InitializeTire(tireR, axle.m_wheels[1], visualization_type)
 
             self.vehicle = self.wheeled_vehicle
             self.sys = self.wheeled_vehicle.GetSystem()
@@ -77,11 +83,11 @@ class ChronoVehicle:
             self.rc_vehicle.SetTireStepSize(step_size)
             self.rc_vehicle.Initialize()
 
-            self.rc_vehicle.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.rc_vehicle.SetChassisVisualizationType(visualization_type)
             self.rc_vehicle.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
             self.rc_vehicle.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
-            self.rc_vehicle.SetWheelVisualizationType(veh.VisualizationType_PRIMITIVES)
-            self.rc_vehicle.SetTireVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.rc_vehicle.SetWheelVisualizationType(visualization_type)
+            self.rc_vehicle.SetTireVisualizationType(visualization_type)
 
             self.vehicle = self.rc_vehicle.GetVehicle()
             self.sys = self.vehicle.GetSystem()
@@ -101,11 +107,11 @@ class ChronoVehicle:
             self.sedan.SetTireStepSize(step_size)
             self.sedan.Initialize()
 
-            self.sedan.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.sedan.SetChassisVisualizationType(visualization_type)
             self.sedan.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
             self.sedan.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
-            self.sedan.SetWheelVisualizationType(veh.VisualizationType_PRIMITIVES)
-            self.sedan.SetTireVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.sedan.SetWheelVisualizationType(visualization_type)
+            self.sedan.SetTireVisualizationType(visualization_type)
 
             self.vehicle = self.sedan.GetVehicle()
             self.sys = self.vehicle.GetSystem()

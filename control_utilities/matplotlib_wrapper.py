@@ -27,6 +27,8 @@ class MatplotlibWrapper:
             for _, obstacle in self.obstacles.items():
                 self.obstacle_outlines[obstacle.num] = (0)
 
+        self.fig = plt.figure(figsize=(8, 5))
+
     def close(self):
         plt.close()
 

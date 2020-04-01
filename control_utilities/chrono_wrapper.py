@@ -1,6 +1,12 @@
 import pychrono as chrono
 import pychrono.vehicle as veh
 import pychrono.irrlicht as chronoirr
+try:
+    import pychrono.sensor as sens
+    use_sensors = True
+except ImportError:
+    # print('Could not import pychrono.sensor. Running demo without sensor')
+    use_sensors = False
 # import pychrono.postprocess as postprocess
 
 from control_utilities.chrono_utilities import checkFile
@@ -167,7 +173,7 @@ class ChronoWrapper:
         path_asset.SetNumRenderPoints(max(2 * num_points, 400))
         road.AddAsset(path_asset)
 
-    def DrawBarriers(self, points, n=5, height=1, width=1):
+    def DrawBarriers(self, points, n=5, height=2, width=1):
         points = points[::n]
         if points[-1] != points[0]:
             points.append(points[-1])
@@ -186,6 +192,23 @@ class ChronoWrapper:
             q.Q_from_AngZ(ang)
             box.SetRot(q)
             box.SetBodyFixed(True)
+
+            if use_sensors:
+                box_asset = box.GetAssets()[0]
+                visual_asset = ch.CastToChVisualization(box_asset)
+
+                vis_mat = ch.ChVisualMaterial()
+                vis_mat.SetAmbientColor(ch.ChVectorF(0, 0, 0))
+
+                if i % 2 == 0:
+                    vis_mat.SetDiffuseColor(ch.ChVectorF(1.0, 0, 0))
+                else:
+                    vis_mat.SetDiffuseColor(ch.ChVectorF(1.0, 1.0, 1.0))
+                vis_mat.SetSpecularColor(ch.ChVectorF(0.9, 0.9, 0.9))
+                vis_mat.SetFresnelMin(0)
+                vis_mat.SetFresnelMax(0.1)
+
+                visual_asset.material_list.append(vis_mat)
 
             color = chrono.ChColorAsset()
             if i % 2 == 0:
