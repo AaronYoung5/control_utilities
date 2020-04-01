@@ -195,16 +195,16 @@ class ChronoWrapper:
 
             if use_sensors:
                 box_asset = box.GetAssets()[0]
-                visual_asset = ch.CastToChVisualization(box_asset)
+                visual_asset = chrono.CastToChVisualization(box_asset)
 
-                vis_mat = ch.ChVisualMaterial()
-                vis_mat.SetAmbientColor(ch.ChVectorF(0, 0, 0))
+                vis_mat = chrono.ChVisualMaterial()
+                vis_mat.SetAmbientColor(chrono.ChVectorF(0, 0, 0))
 
                 if i % 2 == 0:
-                    vis_mat.SetDiffuseColor(ch.ChVectorF(1.0, 0, 0))
+                    vis_mat.SetDiffuseColor(chrono.ChVectorF(1.0, 0, 0))
                 else:
-                    vis_mat.SetDiffuseColor(ch.ChVectorF(1.0, 1.0, 1.0))
-                vis_mat.SetSpecularColor(ch.ChVectorF(0.9, 0.9, 0.9))
+                    vis_mat.SetDiffuseColor(chrono.ChVectorF(1.0, 1.0, 1.0))
+                vis_mat.SetSpecularColor(chrono.ChVectorF(0.9, 0.9, 0.9))
                 vis_mat.SetFresnelMin(0)
                 vis_mat.SetFresnelMax(0.1)
 
