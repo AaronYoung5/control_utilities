@@ -45,6 +45,12 @@ class Driver(veh.ChDriver):
 
     def GetTargetThrottle(self):
         return self.throttle_target
+        
+    def GetSteeringThrottle(self):
+        return self.steering_target
+        
+    def GetBrakingThrottle(self):
+        return self.braking_target
 
     def SetTargetThrottle(self, throttle):
         self.throttle_target = throttle
