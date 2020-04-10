@@ -1,4 +1,5 @@
 from random import randint
+import numpy as np
 
 class Obstacle:
     def __init__(self, p1, p2, i, dist, num, width=1, length=2, movement_rate=-1, movement_distance=0, ch_time=0.0, num_movements=0):
@@ -67,3 +68,18 @@ class RandomObstacleGenerator:
         obstacles[i] = Obstacle(p1, p2, i, obstacle.dist, num=obstacle.num, width=obstacle.width, length=obstacle.length, movement_rate=obstacle.movement_rate,movement_distance=obstacle.movement_distance, ch_time=obstacle.ch_time, num_movements=obstacle.num_movements)
         del obstacles[i_old]
         return obstacles
+
+# Evaluates obstacle's boundary box dimensions x, y, z
+def getObstacleBoundaryDim(mesh):
+    verts = mesh.getCoordsVertices()
+    x = []
+    y = []
+    z = []
+    for vert in verts:
+        x.append(vert.x)
+        y.append(vert.y)
+        z.append(vert.z)
+    x = np.asarray(x)
+    y = np.asarray(y)
+    z = np.asarray(z)
+    return np.amax(x) - np.amin(x), np.amax(y) - np.amin(y), np.amax(z) - np.amin(z)
