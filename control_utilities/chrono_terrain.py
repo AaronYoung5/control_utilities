@@ -58,7 +58,7 @@ class ChronoTerrain:
 
             self.terrain = veh.RigidTerrain(self.sys)
             coord_sys = chrono.ChCoordsysD(offset, chrono.ChQuaternionD(1,0,0,0))
-            patch = self.terrain.AddPatch(coord_sys, chrono.GetChronoDataFile("sensor/textures/hallway.obj"), "mesh", 0.01, False)
+            patch = self.terrain.AddPatch(coord_sys, chrono.GetChronoDataFile("sensor/textures/hallway_contact.obj"), "mesh", 0.01, False)
 
             vis_mesh = chrono.ChTriangleMeshConnected()
             vis_mesh.LoadWavefrontMesh(chrono.GetChronoDataFile("sensor/textures/hallway.obj"), True, True)
@@ -74,6 +74,17 @@ class ChronoTerrain:
             patch.SetContactRestitutionCoefficient(0.01)
             patch.SetContactMaterialProperties(2e7, 0.3)
 
+            self.terrain.Initialize()
+
+        elif terrain_type == 'off-road':
+            self.terrain = veh.RigidTerrain(self.sys)
+            patch = self.terrain.AddPatch(chrono.CSYSNORM, veh.GetDataFile("terrain/height_maps/test.bmp"), "test", 128, 128, -4, 0);
+            patch.SetTexture(veh.GetDataFile("terrain/textures/grass.jpg"), 16, 16);
+
+            patch.SetContactFrictionCoefficient(0.9)
+            patch.SetContactRestitutionCoefficient(0.01)
+            patch.SetContactMaterialProperties(2e7, 0.3)
+            patch.SetColor(chrono.ChColor(0.8, 0.8, 0.5))
             self.terrain.Initialize()
 
     def Synchronize(self, time):

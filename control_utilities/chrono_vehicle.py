@@ -94,6 +94,28 @@ class ChronoVehicle:
 
             self.trackPoint = chrono.ChVectorD(4, 0.0, .15)
 
+        elif vehicle_type == 'hmmwv_reduced':
+            if sys == None:
+                self.hmmwv = veh.HMMWV_Reduced()
+                self.hmmwv.SetContactMethod(chrono.ChMaterialSurface.NSC)
+                self.hmmwv.SetChassisCollisionType(veh.ChassisCollisionType_NONE)
+            else:
+                self.hmmwv = veh.HMMWV_Reduced(sys)
+            self.hmmwv.SetChassisFixed(False)
+            self.hmmwv.SetInitPosition(chrono.ChCoordsysD(initLoc, initRot))
+            self.hmmwv.SetTireType(veh.TireModelType_RIGID)
+            self.hmmwv.SetTireStepSize(step_size)
+            self.hmmwv.Initialize()
+
+            self.hmmwv.SetChassisVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.hmmwv.SetSuspensionVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.hmmwv.SetSteeringVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.hmmwv.SetWheelVisualizationType(veh.VisualizationType_PRIMITIVES)
+            self.hmmwv.SetTireVisualizationType(veh.VisualizationType_PRIMITIVES)
+
+            self.vehicle = self.hmmwv.GetVehicle()
+            self.sys = self.vehicle.GetSystem()
+
         elif vehicle_type == 'sedan':
             if sys == None:
                 self.sedan = veh.Sedan()

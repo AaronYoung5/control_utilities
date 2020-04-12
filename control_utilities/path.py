@@ -4,7 +4,6 @@ import sys
 import numpy as np
 
 from scipy.interpolate import splprep, splev
-from matplotlib import pyplot as plt
 import scipy
 import warnings
 

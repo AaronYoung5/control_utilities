@@ -69,7 +69,6 @@ class Track:
     def generateTrack(self, z=0.0):
         """Generates the left and right boundaries from the centerline"""
         left, right = [], []
-        import matplotlib.pyplot as plt
 
         for i in range(self.center.length-1):
             ix, iy = self.center.x[i], self.center.y[i]
