@@ -70,6 +70,13 @@ class ChronoVehicle:
             self.vehicle = self.wheeled_vehicle
             self.sys = self.wheeled_vehicle.GetSystem()
 
+            self.chassis_body = self.vehicle.GetChassisBody()
+            # self.chassis_body.GetCollisionModel().ClearModel()
+            # size = chrono.ChVectorD(1,,0.2)
+            # self.chassis_body.GetCollisionModel().AddBox(size.x, size.y, size.z)
+            # self.chassis_body.GetCollisionModel().BuildModel()
+            # self.chassis_body.SetCollide(True)
+
         elif vehicle_type == 'rccar':
             if sys == None:
                 self.rc_vehicle = veh.RCCar()

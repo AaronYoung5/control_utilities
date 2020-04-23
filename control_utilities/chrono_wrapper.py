@@ -39,6 +39,9 @@ class ChronoWrapper:
         self.vehicle = vehicle
         self.terrain = terrain
 
+        self.c_f = 0
+        self.barriers = []
+
         if self.irrlicht:
             if draw_track:
                 self.DrawPath(track.center, z=.15)
@@ -216,7 +219,9 @@ class ChronoWrapper:
             else:
                 color.SetColor(chrono.ChColor(1, 1, 1))
             box.AddAsset(color)
+            box.SetCollide(True)
             self.system.Add(box)
+            self.barriers.append(box)
 
     def DrawCones(self, points, color, z=.3, n=10):
         for p in points[::n]:
