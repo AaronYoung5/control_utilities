@@ -69,7 +69,6 @@ class ChronoWrapper:
             self.app.AddTypicalLogo()
             self.app.AddTypicalLights(chronoirr.vector3df(-150., -150., 200.), chronoirr.vector3df(-150., 150., 200.), 100, 100)
             self.app.AddTypicalLights(chronoirr.vector3df(150., -150., 200.), chronoirr.vector3df(150., 150., 200.), 100, 100)
-            self.app.EnableGrid(False)
             self.app.SetChaseCamera(self.vehicle.trackPoint, 6.0, 0.5)
 
             self.app.SetTimestep(self.step_size)
@@ -137,7 +136,6 @@ class ChronoWrapper:
         self.app.AddTypicalLogo()
         self.app.AddTypicalLights(chronoirr.vector3df(-150., -150., 200.), chronoirr.vector3df(-150., 150., 200.), 100, 100)
         self.app.AddTypicalLights(chronoirr.vector3df(150., -150., 200.), chronoirr.vector3df(150., 150., 200.), 100, 100)
-        self.app.EnableGrid(False)
         self.app.SetChaseCamera(self.vehicle.trackPoint, 6.0, 0.5)
 
         self.app.SetTimestep(self.step_size)
