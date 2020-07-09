@@ -4,7 +4,7 @@ import math
 import os
 from random import randint
 
-def calcPose(p1, p2, z=0.0):
+def calcPose(p1, p2, z=0.5):
     """ Calculates pose (position and orientation) from two points """
 
     if isinstance(p1, list):
